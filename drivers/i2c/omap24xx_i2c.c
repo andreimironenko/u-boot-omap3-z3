@@ -29,7 +29,7 @@ static void wait_for_bb (void);
 static u16 wait_for_pin (void);
 static void flush_fifo(void);
 
-static struct i2c *i2c_base = (struct i2c *)I2C_DEFAULT_BASE;
+static unsigned long i2c_base = I2C_DEFAULT_BASE;
 
 static unsigned int bus_initialized[I2C_BUS_MAX];
 static unsigned int current_bus;
@@ -416,13 +416,13 @@ int i2c_set_bus_num(unsigned int bus)
 
 #if I2C_BUS_MAX==3
 	if (bus == 2)
-		i2c_base = (struct i2c *)I2C_BASE3;
+		i2c_base = I2C_BASE3;
 	else
 #endif
 	if (bus == 1)
-		i2c_base = (struct i2c *)I2C_BASE2;
+		i2c_base = I2C_BASE2;
 	else
-		i2c_base = (struct i2c *)I2C_BASE1;
+		i2c_base = I2C_BASE1;
 
 	current_bus = bus;
 
@@ -430,4 +430,9 @@ int i2c_set_bus_num(unsigned int bus)
 		i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
 	return 0;
+}
+
+unsigned int i2c_get_bus_num(void)
+{
+	return current_bus;
 }

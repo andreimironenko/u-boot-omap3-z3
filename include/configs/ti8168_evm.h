@@ -315,7 +315,9 @@ extern unsigned int boot_flash_type;
 # define CONFIG_OMAP3_MMC	1
 # define CONFIG_CMD_MMC		1
 # define CONFIG_DOS_PARTITION	1
+#ifndef CONFIG_CMD_FAT
 # define CONFIG_CMD_FAT		1
+#endif
 #endif
 
 /* Unsupported features */

@@ -63,6 +63,7 @@
 #define DEVICE_ID			(CTRL_BASE + 0x0600)
 /* This gives the status of the boot mode pins on the evm */
 #define SYSBOOT_MASK			(BIT(0) | BIT(1) | BIT(2) |BIT(3) |BIT(4))
+#define PCIE_CFG            (CTRL_BASE + 0x0640)
 
 /* Reset control */
 #define PRM_DEVICE_RSTCTRL		(PRCM_BASE + 0x00A0)
@@ -291,43 +292,44 @@
 #define CM_ALWON_UART_2_CLKCTRL		(PRCM_BASE + 0x1558)
 
 /* I2C */
+
 /* Note: In ti814x I2C0 and I2C2 have common clk control */
 #define CM_ALWON_I2C_0_CLKCTRL		(PRCM_BASE + 0x1564)
 
-/* HSMMC */
-#ifdef CONFIG_TI816X
-#define CM_ALWON_HSMMC_CLKCTRL		(PRCM_BASE + 0x15B0)
-#endif
+/* Note: In ti814x I2C1 and I2C3 have common clk control */
+#define CM_ALWON_I2C_1_CLKCTRL		(PRCM_BASE + 0x1568)
 
-#ifdef CONFIG_TI814X
-#define CM_ALWON_HSMMC_CLKCTRL		(PRCM_BASE + 0x1620)
-#endif
+/* HSMMC */
+#define CM_ALWON_TI816X_HSMMC_CLKCTRL		(PRCM_BASE + 0x15B0)
+
+#define CM_ALWON_TI814X_HSMMC_CLKCTRL		(PRCM_BASE + 0x1620)
 
 /* UART2 registers */
-#ifdef CONFIG_TI816X
-#define DEFAULT_UART_BASE		UART2_BASE
-#endif
+#define UART2_SYSCFG			(UART2_BASE + 0x54)
+#define UART2_SYSSTS			(UART2_BASE + 0x58)
+#define UART2_LCR			(UART2_BASE + 0x0C)
+#define UART2_EFR			(UART2_BASE + 0x08)
+#define UART2_MCR			(UART2_BASE + 0x10)
+#define UART2_SCR			(UART2_BASE + 0x40)
+#define UART2_TCR			(UART2_BASE + 0x18)
+#define UART2_FCR			(UART2_BASE + 0x08)
+#define UART2_DLL			(UART2_BASE + 0x00)
+#define UART2_DLH			(UART2_BASE + 0x04)
+#define UART2_MDR			(UART2_BASE + 0x20)
 
-#ifdef CONFIG_TI814X
-#define DEFAULT_UART_BASE		UART0_BASE
-#endif
-
-/* UART registers */
-/*TODO:Move to a new file */
-#define UART_SYSCFG			(DEFAULT_UART_BASE + 0x54)
-#define UART_SYSSTS			(DEFAULT_UART_BASE + 0x58)
-#define UART_LCR			(DEFAULT_UART_BASE + 0x0C)
-#define UART_EFR			(DEFAULT_UART_BASE + 0x08)
-#define UART_MCR			(DEFAULT_UART_BASE + 0x10)
-#define UART_SCR			(DEFAULT_UART_BASE + 0x40)
-#define UART_TCR			(DEFAULT_UART_BASE + 0x18)
-#define UART_FCR			(DEFAULT_UART_BASE + 0x08)
-#define UART_DLL			(DEFAULT_UART_BASE + 0x00)
-#define UART_DLH			(DEFAULT_UART_BASE + 0x04)
-#define UART_MDR			(DEFAULT_UART_BASE + 0x20)
+#define UART0_SYSCFG			(UART0_BASE + 0x54)
+#define UART0_SYSSTS			(UART0_BASE + 0x58)
+#define UART0_LCR			(UART0_BASE + 0x0C)
+#define UART0_EFR			(UART0_BASE + 0x08)
+#define UART0_MCR			(UART0_BASE + 0x10)
+#define UART0_SCR			(UART0_BASE + 0x40)
+#define UART0_TCR			(UART0_BASE + 0x18)
+#define UART0_FCR			(UART0_BASE + 0x08)
+#define UART0_DLL			(UART0_BASE + 0x00)
+#define UART0_DLH			(UART0_BASE + 0x04)
+#define UART0_MDR			(UART0_BASE + 0x20)
 
 /*DMM & EMIF4 MMR Declaration*/
-/*TODO: Move to a new file */
 #define DMM_LISA_MAP__0			(DMM_BASE + 0x40)
 #define DMM_LISA_MAP__1			(DMM_BASE + 0x44)
 #define DMM_LISA_MAP__2			(DMM_BASE + 0x48)
@@ -445,9 +447,20 @@
 #define MMC_CLK				(CTRL_BASE + 0xa74)
 #define MMC_CMD				(CTRL_BASE + 0xa78)
 #define MMC_DAT0			(CTRL_BASE + 0xa7c)
-#define MMC_DAT1_SDIRQ			(CTRL_BASE + 0xa80)
-#define MMC_DAT2_SDRW			(CTRL_BASE + 0xa84)
+#define MMC_DAT1_SDIRQ		(CTRL_BASE + 0xa80)
+#define MMC_DAT2_SDRW		(CTRL_BASE + 0xa84)
 #define MMC_DAT3			(CTRL_BASE + 0xa88)
+#define MMC_CD   			(CTRL_BASE + 0xa8C)
+#define MMC_WP   			(CTRL_BASE + 0xa90)
+
+#define DM814X_MMC_CLK      (CTRL_BASE + 0x800) /* SD1 */
+#define DM814X_MMC_CMD      (CTRL_BASE + 0x804)
+#define DM814X_MMC_DAT0     (CTRL_BASE + 0x808)
+#define DM814X_MMC_DAT1_SDIRQ     (CTRL_BASE + 0x80C)
+#define DM814X_MMC_DAT2_SDRW     (CTRL_BASE + 0x810)
+#define DM814X_MMC_DAT3     (CTRL_BASE + 0x814)
+#define DM814X_MMC_CD       (CTRL_BASE + 0x93C) 
+#define DM814X_MMC_WP       (CTRL_BASE + 0x928) 
 
 #define GPMC_A12			TIM7_OUT
 #define GPMC_A13			UART1_CTSN

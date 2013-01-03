@@ -35,40 +35,89 @@
 //# undef CONFIG_BOOTM_RTEMS
 //# undef CONFIG_SREC
 //# undef CONFIG_XYZMODEM
+
 # undef CONFIG_SYS_HUSH_PARSER
-# define CONFIG_CMD_LOADB	/* loadb			*/
+//# define CONFIG_CMD_LOADB	/* loadb			*/
 # define CONFIG_CMD_LOADY	/* loady */
 # define CONFIG_SETUP_PLL
 # define CONFIG_TI814X_CONFIG_DDR
-# define CONFIG_TI814X_EVM_DDR3
-/*
- * # define CONFIG_TI814X_EVM_DDR2
- */ 
+// Z3 - DDR2
+//# define CONFIG_TI814X_EVM_DDR3
+# define CONFIG_TI814X_EVM_DDR2
+ 
 # define CONFIG_ENV_SIZE		0x400
 # define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (8 * 1024))
-# define CONFIG_SYS_PROMPT		"TI-MIN#"
-# define CONFIG_BOOTDELAY		3	/* set to negative value for no autoboot */
+# define CONFIG_SYS_PROMPT		"Z3-MIN# "
+#define CONFIG_BOOTDELAY 0
+#define CONFIG_ZERO_BOOTDELAY_CHECK
+#define CONFIG_AUTOBOOT_KEYED		1
+#define CONFIG_AUTOBOOT_PROMPT		""
+#define CONFIG_AUTOBOOT_DELAY_STR	"d"
+#define CONFIG_AUTOBOOT_STOP_STR	"s"
+
+
 # if defined(CONFIG_SPI_BOOT)		/* Autoload the 2nd stage from SPI */
 #  define CONFIG_SPI			1
 #  define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=yes\0" \
+    "dhcp_vendor-class-identifier=DM814x_Stage1\0" \
 	"bootcmd=sf probe 0; sf read 0x81000000 0x20000 0x40000; go 0x81000000\0" \
 
 # elif defined(CONFIG_NAND_BOOT)		/* Autoload the 2nd stage from NAND */
 #  define CONFIG_NAND			1
 #  define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=yes\0" \
-	"bootcmd=nand read 0x81000000 0x20000 0x40000; go 0x81000000\0" \
-
+	"ethaddr=00:01:02:03:04:05\0" \
+	"ipaddr=192.168.0.111\0" \
+	"serverip=192.168.0.6\0" \
+    "dhcp_vendor-class-identifier=DM814x_Stage1\0"
+#if defined(CONFIG_Z3_FACTORY)
+#define CONFIG_BOOTCOMMAND 	"nand erase; setenv netretry yes ; bootp; go 0x81000000" 
+#else
+#define CONFIG_BOOTCOMMAND 	"nand read.i 0x81000000 0x80000 0x40000; go 0x81000000" 
+#endif
 # elif defined(CONFIG_SD_BOOT)		/* Autoload the 2nd stage from SD */
 #  define CONFIG_MMC			1
 #  define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=yes\0" \
+    "dhcp_vendor-class-identifier=DM814x_Stage1\0" \
 	"bootcmd=mmc init; fatload mmc 1 0x80800000 u-boot.bin; go 0x80800000\0" \
 
 # endif
 
+//# define CONFIG_SYS_HUSH_PARSER		/* Use HUSH parser to allow command parsing */
+
+#define CONFIG_CMD_NET 
+#undef CONFIG_SYS_LONGHELP
+
+#if defined(CONFIG_NO_ETH)
+# undef CONFIG_CMD_NET
 #else
+# define CONFIG_CMD_BOOTP
+# undef CONFIG_CMD_PING
+# define CONFIG_CMD_DHCP
+# undef CONFIG_CMD_MII
+#endif
+
+#undef CONFIG_BOOTM_LINUX
+
+#if defined(CONFIG_CMD_NET)
+# define CONFIG_DRIVER_TI_CPSW
+//# define CONFIG_MII
+# define CONFIG_BOOTP_DEFAULT
+//# define CONFIG_BOOTP_DNS
+//# define CONFIG_BOOTP_DNS2
+# define CONFIG_BOOTP_SEND_HOSTNAME
+# define CONFIG_BOOTP_GATEWAY
+# define CONFIG_BOOTP_SUBNETMASK
+# define CONFIG_NET_RETRY_COUNT 	10
+//# define CONFIG_NET_MULTI
+# define CONFIG_PHY_GIGE
+#endif
+
+#else
+
+
 
 # include <config_cmd_default.h>
 # define CONFIG_SKIP_LOWLEVEL_INIT	/* 1st stage would have done the basic init */
@@ -76,7 +125,7 @@
 # define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (32 * 1024))
 # define CONFIG_ENV_OVERWRITE
 # define CONFIG_SYS_LONGHELP
-# define CONFIG_SYS_PROMPT		"TI8148_EVM#"
+# define CONFIG_SYS_PROMPT		"Z3-DM8148# "
 # define CONFIG_SYS_HUSH_PARSER		/* Use HUSH parser to allow command parsing */
 # define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 # define CONFIG_CMDLINE_TAG        	1	/* enable passing of ATAGs  */
@@ -88,29 +137,69 @@
 # define CONFIG_NAND			1
 # define CONFIG_SPI			1
 # define CONFIG_I2C			1
-# define CONFIG_EXTRA_ENV_SETTINGS \
-	"verify=yes\0" \
-	"bootfile=uImage\0" \
-	"ramdisk_file=ramdisk.gz\0" \
-	"loadaddr=0x81000000\0" \
-	"script_addr=0x80900000\0" \
-	"loadbootscript=fatload mmc 1 ${script_addr} boot.scr\0" \
-	"bootscript= echo Running bootscript from MMC/SD to set the ENV...; " \
-		"source ${script_addr}\0" \
 
-# define CONFIG_BOOTCOMMAND \
-	"if mmc init; then " \
-		"if run loadbootscript; then " \
-			"run bootscript; " \
-		"else " \
-			"echo In case ENV on MMC/SD is required; "\
-			"echo Please put a valid script named boot.scr on the card; " \
-			"echo Refer to the User Guide on how to generate the image; " \
-		"fi; " \
-	"else " \
-		"echo Please set bootargs and bootcmd before booting the kernel; " \
-		"echo If that has already been done please ignore this message; "\
-	"fi"
+# define CONFIG_EXTRA_ENV_SETTINGS \
+    "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
+    "netretry=yes\0" \
+    "factoryload=setenv laststage bootp; bootp ; status=$? ; " \
+        "if test ${status} = 0 ; then "\
+            "setenv laststage run_first_script ;" \
+            "source ${loadaddr} ; status=$? ; " \
+        "fi;" \
+        "if test ${status} = 0 ; then "\
+             "setenv laststage second_script ;" \
+             "setenv tftp_root ${bootdir} ;" \
+             "run update-env ; status=$? ;"  \
+             "run eraseenv ; " \
+             "setenv saved_tftp_root ${tftp_root} ;" \
+             "setenv tftp_root ${bootdir} ;" \
+        "fi;" \
+        "if test ${status} = 0 ; then " \
+            "setenv laststage stage1 ;" \
+            "run update-stage1; " \
+            "status=$? ; " \
+        "fi;" \
+        "if test ${status} = 0 ; then " \
+            "setenv laststage uboot ;" \
+            "run update-uboot; " \
+            "status=$? ; " \
+        "fi;" \
+        "if test ${status} = 0 ; then " \
+            "setenv laststage kernel ;" \
+            "run update-kernel; " \
+            "status=$? ; " \
+        "fi;" \
+        "if test ${status} = 0 ; then " \
+            "setenv laststage filesystem ;" \
+            "run update-ubifs; " \
+            "status=$? ; " \
+        "fi;" \
+        "if test ${status} = 0 ; then " \
+            "setenv laststage ;" \
+            "setenv tftp_root ${saved_tftp_root} ;" \
+            "setenv bootcmd 'run nand_boot_ubifs' ; setenv ethaddr ; saveenv ; " \
+        "fi;" \
+    "if test ${status} = 0 ; then "             \
+            "echo ; " \
+            "echo ************************************* ; " \
+            "echo ******** NAND update SUCCESS ******** ; " \
+            "echo ************************************* ; " \
+            "echo ; " \
+        "else " \
+            "echo ; " \
+            "echo UPDATE FAILED at ${laststage} ;" \
+            "echo ; " \
+        "fi\0"
+
+#define CONFIG_BOOTCOMMAND 	"run factoryload"
+
+#define CONFIG_USB_TI814X		1
+#define CONFIG_MUSB_HCD		    1
+#define CONFIG_CMD_USB     
+#define CONFIG_USB_STORAGE
+#define CONFIG_CMD_STORAGE
+#define CONFIG_CMD_FAT         1
+#define CONFIG_SUPPORT_VFAT
 
 
 #endif
@@ -121,6 +210,7 @@
 #define CONFIG_MISC_INIT_R		1
 #ifndef CONFIG_TI814X_MIN_CONFIG
 # define CONFIG_TI814X_ASCIIART		1	/* The centaur */
+# define CONFIG_CMDLINE_EDITING
 #endif
 #define CONFIG_SYS_AUTOLOAD		"yes"
 #define CONFIG_CMD_CACHE
@@ -191,6 +281,7 @@
 #else
 # define CONFIG_CMD_DHCP
 # define CONFIG_CMD_PING
+# define CONFIG_CMD_MII
 #endif
 
 #if defined(CONFIG_CMD_NET)
@@ -224,6 +315,13 @@
 							/* CS0 */
 #define CONFIG_SYS_MAX_NAND_DEVICE	1		/* Max number of NAND */
 #endif							/* devices */
+
+/* Z3 APP board latch */
+#define CONFIG_GPMC_CS2_BASE 0x01000000
+#define CONFIG_GPMC_CS2_SIZE GPMC_SIZE_16M
+
+#define CONFIG_GPMC_CS3_BASE 0x02000000
+#define CONFIG_GPMC_CS3_SIZE GPMC_SIZE_16M
 
 /* ENV in NAND */
 #if defined(CONFIG_NAND_ENV)
@@ -311,14 +409,14 @@ extern unsigned int boot_flash_type;
 # define CONFIG_SYS_I2C_SPEED		100000
 # define CONFIG_SYS_I2C_SLAVE		1
 # define CONFIG_SYS_I2C_BUS		0
-# define CONFIG_SYS_I2C_BUS_SELECT	1
+# define CONFIG_I2C_MULTI_BUS    	1
 # define CONFIG_DRIVER_TI81XX_I2C	1
 
 /* EEPROM definitions */
-# define CONFIG_SYS_I2C_EEPROM_ADDR_LEN		3
-# define CONFIG_SYS_I2C_EEPROM_ADDR		0x50
-# define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	6
-# define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	20
+//# define CONFIG_SYS_I2C_EEPROM_ADDR_LEN		3
+//# define CONFIG_SYS_I2C_EEPROM_ADDR		0x50
+//# define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	6
+//# define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	20
 
 #endif
 
@@ -330,8 +428,14 @@ extern unsigned int boot_flash_type;
 # define CONFIG_CMD_FAT		1
 #endif
 
+//define this to enable Z3 SW updater support.
+#define CONFIG_Z3UPDATER
+
 /* Unsupported features */
 #undef CONFIG_USE_IRQ
+
+/* Vendor class environment variable */
+#define CONFIG_BOOTP_VENDOREX
 
 #endif	  /* ! __CONFIG_TI8148_EVM_H */
 

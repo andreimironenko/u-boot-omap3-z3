@@ -28,6 +28,7 @@
 #include <net.h>
 #include <miiphy.h>
 #include <netdev.h>
+#include <i2c.h>
 
 #if 0
 #define __raw_readl(a)		(*(volatile unsigned int *)(a))
@@ -135,24 +136,26 @@ int board_init(void)
 	/* Do the required pin-muxing before modules are setup */
 	set_muxconf_regs();
 
-	if (PG2_1 == get_cpu_rev()) {
-		/* setup RMII_REFCLK to be sourced from audio_pll */
-		__raw_writel(0x4,RMII_REFCLK_SRC);
-		/*program GMII_SEL register for RGMII mode */
-		__raw_writel(0x30a,GMII_SEL);
-	}
+    /* Z3 - no RMII */
+	/* if (PG2_1 == get_cpu_rev()) { */
+	/* 	/\* setup RMII_REFCLK to be sourced from audio_pll *\/ */
+	/* 	__raw_writel(0x4,RMII_REFCLK_SRC); */
+	/* 	/\*program GMII_SEL register for RGMII mode *\/ */
+	/* 	__raw_writel(0x30a,GMII_SEL); */
+	/* } */
+
 	/* Get Timer and UART out of reset */
 
 	/* UART softreset */
-	regVal = __raw_readl(UART_SYSCFG);
+	regVal = __raw_readl(UART0_SYSCFG);
 	regVal |= 0x2;
-	__raw_writel(regVal, UART_SYSCFG);
-	while( (__raw_readl(UART_SYSSTS) & 0x1) != 0x1);
+	__raw_writel(regVal, UART0_SYSCFG);
+	while( (__raw_readl(UART0_SYSSTS) & 0x1) != 0x1);
 
 	/* Disable smart idle */
-	regVal = __raw_readl(UART_SYSCFG);
+	regVal = __raw_readl(UART0_SYSCFG);
 	regVal |= (1<<3);
-	__raw_writel(regVal, UART_SYSCFG);
+	__raw_writel(regVal, UART0_SYSCFG);
 
 	/* mach type passed to kernel */
 	gd->bd->bi_arch_number = MACH_TYPE_TI8148EVM;
@@ -178,13 +181,53 @@ int dram_init(void)
 	return 0;
 }
 
+static void setup_gpmc(void)
+{
+#if defined( CONFIG_GPMC_CS2_BASE ) 
+    u32 gpmc_cs2_config[6] = {
+		0x00001000,
+		0x001f1f01,
+		0x00080803,
+		0x1c0b1c0a,
+		0x041f1F1F,
+		0x1F0F04C4
+	};
+#endif
+#if defined( CONFIG_GPMC_CS3_BASE ) 
+	u32 gpmc_cs3_config[6] = {
+		0x00001000,
+		0x001f1f01,
+		0x00080803,
+		0x1c0b1c0a, // WE on, WE off, OE off, OE on 
+		0x041a1F1F, // 
+		0x1a0F04C4
+	};
+#endif
+
+#if defined( CONFIG_GPMC_CS2_BASE ) 
+	enable_gpmc_cs_config( (const u32 *)gpmc_cs2_config,
+						   (u32 *)0x500000c0,
+						   CONFIG_GPMC_CS2_BASE,
+						   CONFIG_GPMC_CS2_SIZE );
+#endif
+
+
+#if defined( CONFIG_GPMC_CS3_BASE )	
+	enable_gpmc_cs_config( (const u32 *)gpmc_cs3_config,
+						   (void *) 0x500000f0,
+						   CONFIG_GPMC_CS3_BASE,
+						   CONFIG_GPMC_CS3_SIZE );
+#endif
+
+
+}
 
 int misc_init_r (void)
 {
 	#ifdef CONFIG_TI814X_MIN_CONFIG
-	printf("The 2nd stage U-Boot will now be auto-loaded\n");
-	printf("Please do not interrupt the countdown till "
-		"TI8148_EVM prompt if 2nd stage is already flashed\n");
+	/* printf("The 2nd stage U-Boot will now be auto-loaded\n"); */
+	/* printf("Please do not interrupt the countdown till " */
+	/* 	"TI8148_EVM prompt if 2nd stage is already flashed\n"); */
 	#endif
 
 	#ifdef CONFIG_TI814X_ASCIIART
@@ -227,6 +270,58 @@ int misc_init_r (void)
 	}
 	printf("\n");
 	#endif
+
+	setup_gpmc();
+
+	/* I2C1 and I2C3 */
+	__raw_writel(0x2, CM_ALWON_I2C_1_CLKCTRL);
+	while(__raw_readl(CM_ALWON_I2C_1_CLKCTRL) != 0x2);
+
+#ifndef CONFIG_TI814X_MIN_CONFIG
+    /* Read default power level */
+#if defined( CONFIG_GPMC_CS2_BASE ) 
+    /* External latch must be initialized, in case reset was funky */
+    *((volatile u32 *) CONFIG_GPMC_CS2_BASE) = 0;
+	udelay(10000);
+#endif  
+    {
+        char temp[20];
+        unsigned char i2c_val[3];
+        int status = 0;
+        int retry;
+
+        
+        i2c_val[0] = 0;
+        retry = 3;
+        do { 
+            status = i2c_write( 0x1d, 2, 1, i2c_val, 1 );
+        } while ( status != 0 && retry-- > 0 );
+
+        if ( 0 == status ) {
+            i2c_val[0] = 0xff;
+            retry = 3;
+            do { 
+                status = i2c_write( 0x1d, 3, 1, i2c_val, 1 );
+            } while ( status != 0 && retry-- > 0 );
+        }
+
+        if ( 0 == status ) {
+            retry = 3;
+            do { 
+                status = i2c_read( 0x1d, 0, 1, i2c_val, 1 );
+            } while ( status != 0 && retry-- > 0 );
+        }             
+        if ( 0 == status ) {
+            sprintf( temp, "0x%x", (unsigned int)i2c_val[0] );
+            setenv("defpowerlevel", temp);
+            printf( "Set defpowerlevel to %s\n", temp );
+        } else {
+            strcpy( temp, "0x49" );
+            printf( "Could not read default powerlevel, default to %s\n", temp );
+            setenv("defpowerlevel", temp);
+        }
+    }
+#endif
 	return 0;
 }
 
@@ -330,28 +425,45 @@ static void config_ti814x_ddr(void)
 		/*Program EMIF0 CFG Registers*/
 		__raw_writel(0x7, EMIF4_0_DDR_PHY_CTRL_1); /* RL =5 */
 		__raw_writel(0x7, EMIF4_0_DDR_PHY_CTRL_1_SHADOW); /* RL =5 */
+// Z3 - DDR2 timings for DM814x-MOD-01
+//		__raw_writel(0x0AAAF552, EMIF4_0_SDRAM_TIM_1);
+//		__raw_writel(0x0AAAF552, EMIF4_0_SDRAM_TIM_1_SHADOW);
+		__raw_writel(0x0AAAF55A, EMIF4_0_SDRAM_TIM_1);
+		__raw_writel(0x0AAAF55A, EMIF4_0_SDRAM_TIM_1_SHADOW);
+
 		__raw_writel(0x0AAAF552, EMIF4_0_SDRAM_TIM_1);
 		__raw_writel(0x0AAAF552, EMIF4_0_SDRAM_TIM_1_SHADOW);
 		__raw_writel(0x043631D2, EMIF4_0_SDRAM_TIM_2);
 		__raw_writel(0x043631D2, EMIF4_0_SDRAM_TIM_2_SHADOW);
 		__raw_writel(0x00000327, EMIF4_0_SDRAM_TIM_3);
 		__raw_writel(0x00000327, EMIF4_0_SDRAM_TIM_3_SHADOW);
-		__raw_writel(0x10000C30, EMIF4_0_SDRAM_REF_CTRL);
-		__raw_writel(0x10000C30, EMIF4_0_SDRAM_REF_CTRL_SHADOW);
-		__raw_writel(0x40801AB2, EMIF4_0_SDRAM_CONFIG); /* CL = 6 */
+// Z3 - DDR2 timings for DM814x-MOD-01
+//		__raw_writel(0x10000C30, EMIF4_0_SDRAM_REF_CTRL);
+//		__raw_writel(0x10000C30, EMIF4_0_SDRAM_REF_CTRL_SHADOW);
+//		__raw_writel(0x40801AB2, EMIF4_0_SDRAM_CONFIG); /* CL = 6 */
+		__raw_writel(0x10000820, EMIF4_0_SDRAM_REF_CTRL);
+    	__raw_writel(0x10000820, EMIF4_0_SDRAM_REF_CTRL_SHADOW);
+		__raw_writel(0x41841AB2, EMIF4_0_SDRAM_CONFIG); /* CL = 6; Zt=75R; half drive */
 
 		/*Program EMIF1 CFG Registers*/
 		__raw_writel(0x7, EMIF4_1_DDR_PHY_CTRL_1);
 		__raw_writel(0x7, EMIF4_1_DDR_PHY_CTRL_1_SHADOW);
-		__raw_writel(0x0AAAF552, EMIF4_1_SDRAM_TIM_1);
-		__raw_writel(0x0AAAF552, EMIF4_1_SDRAM_TIM_1_SHADOW);
+// Z3 - DDR2 timings for DM814x-MOD-01
+//		__raw_writel(0x0AAAF552, EMIF4_1_SDRAM_TIM_1);
+//		__raw_writel(0x0AAAF552, EMIF4_1_SDRAM_TIM_1_SHADOW);
+        __raw_writel(0x0AAAF55A, EMIF4_1_SDRAM_TIM_1);
+        __raw_writel(0x0AAAF55A, EMIF4_1_SDRAM_TIM_1_SHADOW);
 		__raw_writel(0x043631D2, EMIF4_1_SDRAM_TIM_2);
 		__raw_writel(0x043631D2, EMIF4_1_SDRAM_TIM_2_SHADOW);
 		__raw_writel(0x00000327, EMIF4_1_SDRAM_TIM_3);
 		__raw_writel(0x00000327, EMIF4_1_SDRAM_TIM_3_SHADOW);
-		__raw_writel(0x10000C30, EMIF4_1_SDRAM_REF_CTRL);
-		__raw_writel(0x10000C30, EMIF4_1_SDRAM_REF_CTRL_SHADOW);
-		__raw_writel(0x40801AB2, EMIF4_1_SDRAM_CONFIG); /* CL = 6 */
+// Z3 - DDR2 timings for DM814x-MOD-01
+//		__raw_writel(0x10000C30, EMIF4_1_SDRAM_REF_CTRL);
+//		__raw_writel(0x10000C30, EMIF4_1_SDRAM_REF_CTRL_SHADOW);
+//		__raw_writel(0x40801AB2, EMIF4_1_SDRAM_CONFIG); /* CL = 6 */
+        __raw_writel(0x10000820, EMIF4_1_SDRAM_REF_CTRL);
+        __raw_writel(0x10000820, EMIF4_1_SDRAM_REF_CTRL_SHADOW);
+		__raw_writel(0x41841AB2, EMIF4_1_SDRAM_CONFIG); /* CL = 6; Zt=75R; half drive */
 	} else {
 		/*Program EMIF0 CFG Registers*/
 		__raw_writel(0xC, EMIF4_0_DDR_PHY_CTRL_1); /* RL =11 */
@@ -623,8 +735,8 @@ void per_clocks_enable(void)
 	while((__raw_readl(CM_ALWON_ETHERNET_0_CLKCTRL) & 0x30000) != 0);
 	__raw_writel(0x2, CM_ALWON_ETHERNET_1_CLKCTRL);
 	/* HSMMC */
-	__raw_writel(0x2, CM_ALWON_HSMMC_CLKCTRL);
-	while(__raw_readl(CM_ALWON_HSMMC_CLKCTRL) != 0x2);
+	__raw_writel(0x2, CM_ALWON_TI814X_HSMMC_CLKCTRL);
+	while(__raw_readl(CM_ALWON_TI814X_HSMMC_CLKCTRL) != 0x2);
 
 	/* WDT */
 	/* For WDT to be functional, it needs to be first stopped by writing
@@ -743,7 +855,7 @@ static void cpsw_pad_config()
 			BIT(0));
 
 	/*For PG1.0 we only support GMII Mode, setup gmii0/gmii1 pins here*/
-	if (PG1_0 == get_cpu_rev()) {
+	if ( 1 /*Z3*/ /*PG1_0 == get_cpu_rev()*/) {
 		/* setup gmii0 pins, pins235-258 in function mode 1 */
 		val = PAD235_CNTRL;
 		PAD235_CNTRL = (volatile unsigned int) (BIT(19) | BIT(18) |
@@ -917,7 +1029,16 @@ void set_muxconf_regs(void)
 	for (i = 0; i<N_PINS; i++)
 	{
 		add = PIN_CTRL_BASE + (i*4);
-		val = __raw_readl(add);
+		switch (i+1) {
+		case 228: //pinctrl 228 - I2C2_SDA
+		case 229: //pinctrl 229 - I2C2_SDA
+			val = 0xe0000;
+			break;
+		default:
+			val = __raw_readl(add);
+			break;
+		}		
+        val &= 0xffffff00;
 		val |= pad_conf[i];
 		__raw_writel(val, add);
 	}
@@ -984,23 +1105,32 @@ static void phy_init(char *name, int addr)
 
 	udelay(100000);
 
-	/* Enable PHY to clock out TX_CLK */
-	miiphy_read(name, addr, PHY_CONF_REG, &val);
-	val |= PHY_CONF_TXCLKEN;
-	miiphy_write(name, addr, PHY_CONF_REG, val);
-	miiphy_read(name, addr, PHY_CONF_REG, &val);
+//	/* Enable PHY to clock out TX_CLK */
+//	if ( 0 == miiphy_read(name, addr, PHY_CONF_REG, &val) ) {
+//        val |= PHY_CONF_TXCLKEN;
+//        miiphy_write(name, addr, PHY_CONF_REG, val);
+//        miiphy_read(name, addr, PHY_CONF_REG, &val);
+//    }
 
 	/* Enable Autonegotiation */
-	if (miiphy_read(name, addr, PHY_BMCR, &val) != 0) {
-		printf("failed to read bmcr\n");
-		return;
+	while (miiphy_read(name, addr, PHY_BMCR, &val) != 0) {
+		printf("failed to read bmcr - x%x\n", val );
+        udelay(100000);
 	}
+
 	val |= PHY_BMCR_DPLX | PHY_BMCR_AUTON | PHY_BMCR_100_MBPS;
 	if (miiphy_write(name, addr, PHY_BMCR, val) != 0) {
 		printf("failed to write bmcr\n");
 		return;
 	}
 	miiphy_read(name, addr, PHY_BMCR, &val);
+
+	/* /\* Disable GIG advertisement *\/ */
+    /* if ( 0 == miiphy_read(name, addr, PHY_1000BTCR, &val) ) { */
+    /*     val &= ~(PHY_1000BTCR_1000FD|PHY_1000BTCR_1000HD); */
+    /*     miiphy_write(name, addr, PHY_1000BTCR, val); */
+    /*     miiphy_read(name, addr, PHY_1000BTCR, &val); */
+    /* } */
 
 	/* Setup GIG advertisement */
 	miiphy_read(name, addr, PHY_1000BTCR, &val);
@@ -1042,6 +1172,8 @@ static void phy_init(char *name, int addr)
 		if (!(val & PHY_BMSR_AUTN_COMP))
 			printf("Auto negotitation failed\n");
 	}
+
+
 }
 
 static void cpsw_control(int enabled)
@@ -1059,15 +1191,16 @@ static struct cpsw_slave_data cpsw_slaves[] = {
 	{
 		.slave_reg_ofs  = 0x90,
 		.sliver_reg_ofs = 0x740,
-		.phy_id         = 0,
+		.phy_id         = 2,
 	},
 };
 
 static struct cpsw_platform_data cpsw_data = {
 	.mdio_base		= TI814X_CPSW_MDIO_BASE,
 	.cpsw_base		= TI814X_CPSW_BASE,
-	.mdio_div		= 0xff,
-	.channels		= 8,
+//	.mdio_div		= 0xff,
+	.mdio_div		= 0x2f,
+ 	.channels		= 8,
 	.cpdma_reg_ofs		= 0x100,
 	.slaves			= 1,
 	.slave_data		= cpsw_slaves,
@@ -1088,6 +1221,8 @@ int board_eth_init(bd_t *bis)
 	u_int8_t mac_addr[6];
 	u_int32_t mac_hi,mac_lo;
 
+    int       phy_id;
+
 	cpsw_pad_config();
 
 	if (!eth_getenv_enetaddr("ethaddr", mac_addr)) {
@@ -1102,22 +1237,29 @@ int board_eth_init(bd_t *bis)
 		mac_addr[4] = mac_lo & 0xFF;
 		mac_addr[5] = (mac_lo & 0xFF00) >> 8;
 		/* set the ethaddr variable with MACID detected */
-		setenv("ethaddr",(char*)mac_addr);
+        eth_setenv_enetaddr("ethaddr",mac_addr);
 	}
 
 	if(is_valid_ether_addr(mac_addr)) {
+#ifndef CONFIG_TI814X_MIN_CONFIG
 		printf("Detected MACID:%x:%x:%x:%x:%x:%x\n",mac_addr[0],
 			mac_addr[1], mac_addr[2], mac_addr[3],
 			mac_addr[4], mac_addr[5]);
+#endif
 		cpsw_eth_set_mac_addr(mac_addr);
 	} else {
+#ifndef CONFIG_TI814X_MIN_CONFIG
 		printf("Caution:using static MACID!! Set <ethaddr> variable\n");
+#endif
 	}
 
-	if (PG1_0 != get_cpu_rev()) {
-		cpsw_slaves[0].phy_id = 0;
-		cpsw_slaves[1].phy_id = 1;
-	}
+    /* Z3 */
+	/* if (PG1_0 != get_cpu_rev()) { */
+    /*     phy_id = cpsw_slaves[0].phy_id; */
+	/* 	cpsw_slaves[0].phy_id = cpsw_slaves[1].phy_id; */
+    /*     cpsw_slaves[1].phy_id = phy_id; */
+	/* } */
+
 
 	return cpsw_register(&cpsw_data);
 }

@@ -32,13 +32,22 @@ ifeq ($(MTD_VERSION),old)
 CPPFLAGS += -DMTD_OLD
 endif
 
-all:	$(obj)fw_printenv
+all:	$(obj)fw_printenv $(obj)fw_setenv
 
 $(obj)fw_printenv:	$(SRCS) $(HEADERS)
 	$(CROSS_COMPILE)gcc $(CPPFLAGS) $(SRCS) -o $(obj)fw_printenv
 
+$(obj)fw_printenv_target: $(obj)fw_printenv
+	cp $< $@
+
 clean:
 	rm -f $(obj)fw_printenv $(obj)crc32.c
+
+$(obj)fw_setenv:	$(obj)fw_printenv
+	ln -sf $< $@
+
+$(obj)fw_setenv_target:	$(obj)fw_printenv_target
+	ln -sf $< $@
 
 $(obj)crc32.c:
 	ln -s $(src)../../lib/crc32.c $(obj)crc32.c

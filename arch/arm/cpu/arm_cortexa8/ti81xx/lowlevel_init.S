@@ -407,6 +407,7 @@ SRAM_STACK:
 	.word (SRAM0_START + SRAM0_SIZE - SRAM_GPMC_STACK_SIZE)
 #else
 SRAM_STACK:
+	.word 0x4031FFF0				/* ^^^^ Bruno. Below is corrupting code */
 	.word (SRAM0_START + 0x2800)	/* we'll place stack+heap+gd in top 10 KB */
 #endif
 

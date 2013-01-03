@@ -71,7 +71,8 @@ extern void	BootpRequest (void);
 extern void DhcpRequest(void);
 
 /* DHCP States */
-typedef enum { INIT,
+typedef enum { DHCP_NONE,
+           INIT,
 	       INIT_REBOOT,
 	       REBOOTING,
 	       SELECTING,

@@ -704,8 +704,15 @@ int davinci_emac_initialize(void)
 	}
 
 	/* Find if a PHY is connected and get it's address */
-	if (!davinci_eth_phy_detect())
-		return(0);
+//	if (!davinci_eth_phy_detect())
+//		return(0);
+	i = 0;
+	while (!davinci_eth_phy_detect()) {
+		if (++i > 5)
+			return(0);
+		udelay(10000);
+	}
+
 
 	/* Get PHY ID and initialize phy_ops for a detected PHY */
 	if (!davinci_eth_phy_read(active_phy_addr, PHY_PHYIDR1, &tmp)) {

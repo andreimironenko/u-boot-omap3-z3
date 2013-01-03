@@ -135,6 +135,9 @@ static int init_baudrate (void)
 
 static int display_banner (void)
 {
+#ifdef CONFIG_TI814X_MIN_CONFIG
+    return 0;
+#else
 	printf ("\n\n%s\n\n", version_string);
 	debug ("U-Boot code: %08lX -> %08lX  BSS: -> %08lX\n",
 	       _armboot_start, _bss_start, _bss_end);
@@ -147,6 +150,7 @@ static int display_banner (void)
 #endif
 
 	return (0);
+#endif
 }
 
 /*
@@ -334,7 +338,9 @@ void start_armboot (void)
 #endif /* CONFIG_LCD */
 
 #if defined(CONFIG_CMD_NAND)
+#ifndef CONFIG_TI814X_MIN_CONFIG
 	puts ("NAND:  ");
+#endif
 	nand_init();		/* go init the NAND */
 #endif
 

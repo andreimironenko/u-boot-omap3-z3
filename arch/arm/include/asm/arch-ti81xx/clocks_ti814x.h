@@ -40,7 +40,8 @@
 #define L3_CLKCTRL	0x801
 
 #define DDR_N		19
-#define DDR_M		(pg_val_ti814x(666, 800))
+//#define DDR_M		(pg_val_ti814x_ddr(666, 800))
+#define DDR_M		(pg_val_ti814x_ddr(400, 800))  // Z3 DM814x-MOD-01 with DDR2
 #define DDR_M2		2
 #define DDR_CLKCTRL	0x801
 

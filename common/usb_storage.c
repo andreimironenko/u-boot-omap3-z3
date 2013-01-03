@@ -1007,7 +1007,8 @@ static void usb_bin_fixup(struct usb_device_descriptor descriptor,
 }
 #endif /* CONFIG_USB_BIN_FIXUP */
 
-#define USB_MAX_READ_BLK 20
+//#define USB_MAX_READ_BLK 20
+#define USB_MAX_READ_BLK 128
 
 unsigned long usb_stor_read(int device, unsigned long blknr,
 			    unsigned long blkcnt, void *buffer)

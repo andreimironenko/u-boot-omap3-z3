@@ -25,7 +25,12 @@
 
 #ifdef CONFIG_TI816X_EVM_DDR3
 
-#define CONFIG_TI816X_DDR3_796 /* Values supported 400,531,675,796 */
+/*
+ * Setup PLL and EMIF parameters for desired clock speed in MHz
+ * Values supported 400,531,648,661,675,796
+ * Use 531MHz, 661MHz (or 675MHz) or 796MHz for DDR3-1066, DDR3-1333 or DDR3-1600
+ */
+#define CONFIG_TI816X_DDR3_675
 #define CONFIG_TI816X_DDR3_SW_LEVELING	/* Enable software leveling as part of DDR3 init*/
 
 
@@ -175,16 +180,18 @@
 #if defined(CONFIG_TI816X_DDR3_400)
 #define EMIF_TIM1    0x0CCCE524
 #define EMIF_TIM2    0x30308023
-#define EMIF_TIM3    0x009F82CF
+#define EMIF_TIM3    0x009F82C8
 #define EMIF_SDREF   0x10000C30
 #define EMIF_SDCFG   0x62A41032
-#define EMIF_PHYCFG  0x0000010B
+#define EMIF_PHYCFG  0x0000030B
 
 #if defined(CONFIG_TI816X_DDR3_SW_LEVELING)
 /* These values are obtained from the CCS app */
 #define RD_DQS_GATE	0x12A
-#define RD_DQS		0x3B
-#define WR_DQS		0xA6
+//#define RD_DQS		0x3B
+//#define WR_DQS		0xA6
+#define RD_DQS		0x50
+#define WR_DQS		0x00
 #endif
 
 #endif	/* CONFIG_TI816X_DDR3_400 */
@@ -193,10 +200,10 @@
 #if defined(CONFIG_TI816X_DDR3_531)
 #define EMIF_TIM1    0x0EF136AC
 #define EMIF_TIM2    0x30408063
-#define EMIF_TIM3    0x009F83AF
+#define EMIF_TIM3    0x009F83A8
 #define EMIF_SDREF   0x1000102E
 #define EMIF_SDCFG   0x62A51832
-#define EMIF_PHYCFG  0x0000010C
+#define EMIF_PHYCFG  0x0000030C
 
 #if defined(CONFIG_TI816X_DDR3_SW_LEVELING)
 /* These values are obtained from the CCS app */
@@ -208,20 +215,21 @@
 #endif /* CONFIG_TI816X_DDR_531 */
 
 /* For 675 MHz */
-#if defined(CONFIG_TI816X_DDR3_675)
-#define EMIF_TIM1    0x13358875
+#if defined(CONFIG_TI816X_DDR3_675) || defined(CONFIG_TI816X_DDR3_661) || defined(CONFIG_TI816X_DDR3_648)
+#define EMIF_TIM1    0x133588F5
 #define EMIF_TIM2    0x5051806C
-#define EMIF_TIM3    0x009F84AF
+#define EMIF_TIM3    0x009F84C8
 #define EMIF_SDREF   0x10001491
-#define EMIF_SDCFG   0x62A63032
-#define EMIF_PHYCFG  0x0000010F
+#define EMIF_SDCFG   0x62a632b2	// 0x62A63032
+//						011 00 010 1 01 0 01 10 - 00 1100 101 011 0 010 : chg RSIZE to match
+//						011 00 010 1 01 0 01 10 - 00 1100 000 011 0 010 : Original
+#define EMIF_PHYCFG  0x0000030F
 
 #if defined(CONFIG_TI816X_DDR3_SW_LEVELING)
 /* These values are obtained from the CCS app */
-#define RD_DQS_GATE	0x196
+#define RD_DQS_GATE	0x13D
 #define RD_DQS		0x39
-#define WR_DQS		0x91
-
+#define WR_DQS		0xB4
 #endif
 
 #endif /* CONFIG_TI816X_DDR3_675 */
@@ -230,19 +238,32 @@
 #if defined(CONFIG_TI816X_DDR3_796)
 #define EMIF_TIM1   0x1779C9FE
 #define EMIF_TIM2   0x50608074
-#define EMIF_TIM3   0x009F857F
+#define EMIF_TIM3   0x009F8578
 #define EMIF_SDREF  0x10001841
-#define EMIF_SDCFG  0x62A73832
-#define EMIF_PHYCFG 0x00000110
+#define EMIF_SDCFG  0x62a732b2		/* Was 0x62A73832, changed RSIZE to 1K */
+#define EMIF_PHYCFG 0x00000310
 
 #if defined(CONFIG_TI816X_DDR3_SW_LEVELING)
-/* These values are obtained from the CCS app */
-#define RD_DQS_GATE	0x1B3
-#define RD_DQS		0x35
-#define WR_DQS		0x93
+	#if 0
+		/* These values are obtained from the CCS app */
+		#define RD_DQS_GATE	0x1B3
+		//#define RD_DQS		0x35
+		//#define WR_DQS		0x93
+		#define RD_DQS		0x35
+		#define WR_DQS		0x93
+	#else
+		/* Common value for Z3-DM8168-MOD-22 and Z3-DM8168-MOD-02 */
+		//#define RD_DQS_GATE	0x180
+		//#define RD_DQS		0x30
+		//#define WR_DQS		0x80
 
+#define RD_DQS_GATE	0x13D
+#define RD_DQS		0x39
+#define WR_DQS		0xB4
+
+
+	#endif
 #endif
-
 #endif /* CONFIG_TI816X_DDR_796 */
 
 

@@ -468,6 +468,7 @@ static int cpsw_mdio_read(char *devname, unsigned char phy_id,
 	reg = wait_for_user_access();
 
 	*data = (reg & USERACCESS_ACK) ? (reg & USERACCESS_DATA) : -1;
+//    printf( "cpsw_mdio_read %u x%x <= %x\n", (int)phy_id, (int)phy_reg, (int)*data );
 	return (reg & USERACCESS_ACK) ? 0 : -EIO;
 }
 
@@ -482,6 +483,7 @@ static int cpsw_mdio_write(char *devname, unsigned char phy_id,
 	wait_for_user_access();
 	reg = (USERACCESS_GO | USERACCESS_WRITE | (phy_reg << 21) |
 		   (phy_id << 16) | (data & USERACCESS_DATA));
+//    printf( "cpsw_mdio_write %u x%x => %x\n", (int)phy_id, (int)phy_reg, (int)data );
 	__raw_writel(reg, &mdio_regs->user[0].access);
 	wait_for_user_access();
 
@@ -564,7 +566,7 @@ static void cpsw_slave_update_link(struct cpsw_slave *slave,
 		*link = 1;
 		mac_control = priv->data.mac_control;
 		if (speed == 1000)
-			mac_control |= BIT(7);	/* GIGABITEN	*/
+			mac_control |= (BIT(7)|BIT(17)); /* GIGABITEN | FORCE_GIG to ignore MTCLK */
 		if (duplex == FULL)
 			mac_control |= BIT(0);	/* FULLDUPLEXEN	*/
 	}
@@ -801,9 +803,13 @@ static int cpsw_send(struct eth_device *dev, volatile void *packet, int length)
 	struct cpsw_priv	*priv = dev->priv;
 	void *buffer;
 	int len;
+    static unsigned long send_link_check_timer;
 
-	if (!cpsw_update_link(priv))
-		return -EIO;
+    if ( get_timer(send_link_check_timer) > CONFIG_SYS_HZ ) {
+        send_link_check_timer = get_timer(0);
+        if (!cpsw_update_link(priv))
+            return -EIO;
+    }
 
 	/* first reap completed packets */
 	while (cpdma_process(priv, &priv->tx_chan, &buffer, &len) >= 0)

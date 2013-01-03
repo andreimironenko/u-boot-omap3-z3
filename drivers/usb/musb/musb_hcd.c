@@ -256,7 +256,7 @@ static int wait_until_ep0_ready(struct usb_device *dev, u32 bit_mask)
 
 		/* Check the timeout */
 		if (--timeout)
-			udelay(1);
+			udelay(100);
 		else {
 			dev->status = USB_ST_CRC_ERR;
 			result = -1;
@@ -289,7 +289,7 @@ static u8 wait_until_txep_ready(struct usb_device *dev, u8 ep)
 
 		/* Check the timeout */
 		if (--timeout)
-			udelay(1);
+			udelay(100);
 		else {
 			dev->status = USB_ST_CRC_ERR;
 			return -1;
@@ -321,7 +321,7 @@ static u8 wait_until_rxep_ready(struct usb_device *dev, u8 ep)
 
 		/* Check the timeout */
 		if (--timeout)
-			udelay(1);
+			udelay(100);
 		else {
 			dev->status = USB_ST_CRC_ERR;
 			return -1;
@@ -1071,6 +1071,7 @@ int usb_lowlevel_init(void)
 {
 	u8  power;
 	u32 timeout;
+	u32 vbus_timeout = 25; //wait for ~250ms after vbus is applied
 
 	musb_rh_init();
 
@@ -1088,12 +1089,20 @@ int usb_lowlevel_init(void)
 	 * should be a usb device connected.
 	 */
 	timeout = musb_cfg.timeout;
-	while (timeout--)
-		if (readb(&musbr->devctl) & MUSB_DEVCTL_HM)
-			break;
-
+	//printf("waiting for musb is enabled ...\n");
+	while (--timeout && vbus_timeout)
+	{
+		u8 devctl = readb(&musbr->devctl);
+		if ((devctl & MUSB_DEVCTL_VBUS) == MUSB_DEVCTL_VBUS)
+		{
+			udelay(10000);
+			vbus_timeout--;
+		}
+		if (devctl & MUSB_DEVCTL_HM) break;
+	}
+	//printf("waiting for musb is enabled done: %d\n", timeout);
 	/* if musb core is not in host mode, then return */
-	if (!timeout)
+	if (!timeout || !vbus_timeout)
 		return -1;
 
 	/* start usb bus reset */

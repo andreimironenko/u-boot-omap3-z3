@@ -1,3 +1,4 @@
+#define DEBUG
 /*
  *	Based on LiMon - BOOTP.
  *
@@ -41,7 +42,7 @@ ulong		seed1, seed2;
 #endif
 
 #if defined(CONFIG_CMD_DHCP)
-dhcp_state_t dhcp_state = INIT;
+dhcp_state_t dhcp_state = DHCP_NONE;
 unsigned long dhcp_leasetime = 0;
 IPaddr_t NetDHCPServerIP = 0;
 static void DhcpHandler(uchar * pkt, unsigned dest, unsigned src, unsigned len);
@@ -66,6 +67,33 @@ static char *dhcpmsg2str(int type)
 #if defined(CONFIG_BOOTP_VENDOREX)
 extern u8 *dhcp_vendorex_prep (u8 *e); /*rtn new e after add own opts. */
 extern u8 *dhcp_vendorex_proc (u8 *e); /*rtn next e if mine,else NULL  */
+
+/* ------------------------------------------------------------------------- */
+u8 *dhcp_vendorex_prep (u8 * e)
+{
+	char *ptr;
+
+	/* DHCP vendor-class-identifier = 60 */
+	if ((ptr = getenv ("dhcp_vendor-class-identifier"))) {
+		*e++ = 60;
+		*e++ = strlen (ptr);
+		while (*ptr)
+			*e++ = *ptr++;
+	}
+	/* my DHCP_CLIENT_IDENTIFIER = 61 */
+	if ((ptr = getenv ("dhcp_client_id"))) {
+		*e++ = 61;
+		*e++ = strlen (ptr);
+		while (*ptr)
+			*e++ = *ptr++;
+	}
+	return e;
+}
+
+u8 *dhcp_vendorex_proc (u8 * popt)
+{
+	return NULL;
+}
 #endif
 
 #endif
@@ -105,6 +133,7 @@ static int BootpCheckPkt(uchar *pkt, unsigned dest, unsigned src, unsigned len)
 static void BootpCopyNetParams(Bootp_t *bp)
 {
 	IPaddr_t tmp_ip;
+    char saved_char, *ptr_char;
 
 	NetCopyIP(&NetOurIP, &bp->bp_yiaddr);
 #if !defined(CONFIG_BOOTP_SERVERIP)
@@ -125,6 +154,19 @@ static void BootpCopyNetParams(Bootp_t *bp)
 	if (*BootFile) {
 		setenv ("bootfile", BootFile);
 	}
+
+    ptr_char = strrchr( BootFile, '/' );
+    if ( NULL == ptr_char ) 
+        ptr_char = strrchr( BootFile, '\\' );
+    
+    if ( ptr_char == NULL ) {
+        ptr_char = BootFile;
+    }
+
+    saved_char = *ptr_char;
+    *ptr_char = '\0';
+    setenv ("bootdir", BootFile);
+    *ptr_char = saved_char;
 }
 
 static int truncate_sz (const char *name, int maxlen, int curlen)
@@ -137,7 +179,7 @@ static int truncate_sz (const char *name, int maxlen, int curlen)
 	return (curlen);
 }
 
-#if !defined(CONFIG_CMD_DHCP)
+#if 1 //!defined(CONFIG_CMD_DHCP)
 
 static void BootpVendorFieldProcess (u8 * ext)
 {
@@ -413,8 +455,10 @@ static int DhcpExtended (u8 * e, int message_type, IPaddr_t ServerID, IPaddr_t R
 #endif
 
 #if defined(CONFIG_BOOTP_VENDOREX)
+//	if ((x = dhcp_vendorex_prep (e)))
+//		return x - start;
 	if ((x = dhcp_vendorex_prep (e)))
-		return x - start;
+		e = x;
 #endif
 
 	*e++ = 55;		/* Parameter Request List */
@@ -474,11 +518,15 @@ static int DhcpExtended (u8 * e, int message_type, IPaddr_t ServerID, IPaddr_t R
 static int BootpExtended (u8 * e)
 {
 	u8 *start = e;
+    u8 *x;
 
 	*e++ = 99;		/* RFC1048 Magic Cookie */
 	*e++ = 130;
 	*e++ = 83;
 	*e++ = 99;
+
+	if ((x = dhcp_vendorex_prep (e)))
+		e = x;
 
 #if defined(CONFIG_CMD_DHCP)
 	*e++ = 53;		/* DHCP Message Type */
@@ -546,9 +594,9 @@ BootpRequest (void)
 	Bootp_t *bp;
 	int ext_len, pktlen, iplen;
 
-#if defined(CONFIG_CMD_DHCP)
-	dhcp_state = INIT;
-#endif
+//#if defined(CONFIG_CMD_DHCP)
+//	dhcp_state = INIT;
+//#endif
 
 #ifdef CONFIG_BOOTP_RANDOM_DELAY		/* Random BOOTP delay */
 	unsigned char bi_enetaddr[6];
@@ -668,8 +716,12 @@ BootpRequest (void)
 	NetSetTimeout(SELECT_TIMEOUT, BootpTimeout);
 
 #if defined(CONFIG_CMD_DHCP)
-	dhcp_state = SELECTING;
-	NetSetHandler(DhcpHandler);
+    if ( dhcp_state >= INIT ) {
+        dhcp_state = SELECTING;
+        NetSetHandler(DhcpHandler);
+    } else {
+        NetSetHandler(BootpHandler);
+    }
 #else
 	NetSetHandler(BootpHandler);
 #endif
@@ -943,6 +995,7 @@ DhcpHandler(uchar * pkt, unsigned dest, unsigned src, unsigned len)
 
 void DhcpRequest(void)
 {
+    dhcp_state = INIT;
 	BootpRequest();
 }
 #endif	/* CONFIG_CMD_DHCP */

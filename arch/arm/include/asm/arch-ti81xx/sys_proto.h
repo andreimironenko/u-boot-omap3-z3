@@ -42,6 +42,7 @@ void gpmc_init(void);
 void watchdog_init(void);
 void set_muxconf_regs(void);
 u32 get_cpu_rev(void);
+u32 get_cpu_type(void);
 u32 get_mem_type(void);
 u32 get_sysboot_value(void);
 int print_cpuinfo (void);
@@ -60,6 +61,8 @@ void sdelay(unsigned long);
 void omap_nand_switch_ecc(int);
 void power_init_r(void);
 void invalidate_dcache(u32);
+void enable_gpmc_cs_config(const u32 *gpmc_config, struct gpmc_cs *cs, u32 base,
+						   u32 size);
 u32 pg_val_ti816x(u32, u32);
 u32 pg_val_ti814x(u32, u32);
 #endif

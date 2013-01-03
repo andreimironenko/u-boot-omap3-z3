@@ -15,10 +15,10 @@
  */
 
 /* 1-4 */	BIT(0), BIT(0), BIT(0), BIT(0),
-/* -8 */	BIT(0), BIT(0), BIT(0), BIT(0),
-/* -12 */	BIT(0), BIT(0), BIT(0), BIT(0),
+/* -8 */	BIT(0), BIT(0), BIT(0), BIT(7), /* gp0[1] - gp0[6] - APP-31 */
+/* -12 */	BIT(7), BIT(7), BIT(7), BIT(7),
 		/* 14 usb1_drvvbus, fn8, pulldn enable */
-/* -16 */	BIT(0), BIT(7), BIT(0), BIT(0),
+/* -16 */	BIT(7), BIT(7), BIT(0), BIT(0),
 /* -20 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -24 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -28 */	BIT(0), BIT(0), BIT(0), BIT(0),
@@ -44,7 +44,7 @@
 /* -108 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -112 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -116 */	BIT(0), BIT(0), BIT(0), BIT(0),
-/* -120 */	BIT(0), BIT(0), BIT(0), BIT(0),
+/* -120 */	BIT(1), BIT(0), BIT(0), BIT(0), /* 117 - GPMC_A1 for APP-31 latch */
 /* -124 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -128 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -132 */	BIT(0), BIT(0), BIT(0), BIT(0),
@@ -71,8 +71,8 @@
 /* -216 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -220 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -224 */	BIT(0), BIT(0), BIT(0), BIT(0),
-/* -228 */	BIT(0), BIT(0), BIT(0), BIT(0),
-/* -232 */	BIT(0), BIT(0), BIT(0), BIT(0),
+/* -228 */	BIT(0), BIT(0), BIT(0), BIT(6), /* 228 - I2C[2]_SCL */
+/* -232 */	BIT(6), BIT(0), BIT(0), BIT(0), /* 229 - I2C[2]_SDA */
 /* -236 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -240 */	BIT(0), BIT(0), BIT(0), BIT(0),
 /* -244 */	BIT(0), BIT(0), BIT(0), BIT(0),

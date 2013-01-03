@@ -6,7 +6,11 @@
 
 #define ndelay(x)	udelay(1)
 
+#ifdef CONFIG_TI814X_MIN_CONFIG
+#define printk(...) do { } while (0)
+#else
 #define printk	printf
+#endif
 
 #define KERN_EMERG
 #define KERN_ALERT

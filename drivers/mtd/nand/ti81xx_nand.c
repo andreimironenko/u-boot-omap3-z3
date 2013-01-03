@@ -874,7 +874,7 @@ int board_nand_init(struct nand_chip *nand)
 	nand->chip_delay = 100;
 
 	/* fallback ecc info, this will be overridden by 
-	 * ti81xx_nand_switch_ecc() below to 1-bit h/w ecc
+	 * ti81xx_nand_switch_ecc() below to sw ecc
 	 */
 	nand->priv = &bch_priv;
 	nand->ecc.mode = NAND_ECC_SOFT;
@@ -883,7 +883,7 @@ int board_nand_init(struct nand_chip *nand)
 	elm_init();
 
 	nand_curr_device = 0;
-	ti81xx_nand_switch_ecc(NAND_ECC_HW, 0);
+	ti81xx_nand_switch_ecc(NAND_ECC_SOFT, 0);
 
 	return 0;
 }

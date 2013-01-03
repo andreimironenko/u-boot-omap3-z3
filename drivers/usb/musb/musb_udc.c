@@ -61,6 +61,8 @@
 #include "am35x.h"
 #elif defined(CONFIG_USB_DAVINCI)
 #include "davinci.h"
+#elif defined(CONFIG_USB_TI816X)
+#include "ti81xx.h"
 #endif
 
 /* Define MUSB_DEBUG for debugging */

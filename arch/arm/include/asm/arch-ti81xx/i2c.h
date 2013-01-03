@@ -24,8 +24,14 @@
 #define _I2C_H_
 
 #define	I2C_BASE1	0x48028000
+#if defined(CONFIG_TI814X)
+/* I2C bus 1 is used for HDMI - assign bus 2 instead*/
+#define	I2C_BASE2	0x4819c000
+#define I2C_BUS_MAX	2
+#else
 #define	I2C_BASE2	0x4802A000
 #define I2C_BUS_MAX	2
+#endif
 
 #define I2C_DEFAULT_BASE	I2C_BASE1
 #define I2C_IP_CLK		48000000
@@ -34,19 +40,19 @@
 #define I2C_IP_CLK			48000000
 #define I2C_INTERNAL_SAMLPING_CLK	12000000
 
-#define I2C_REV		(I2C_DEFAULT_BASE + 0x00)
-#define I2C_IE		(I2C_DEFAULT_BASE + 0x2C)
-#define I2C_STAT	(I2C_DEFAULT_BASE + 0x28)
-#define I2C_BUF		(I2C_DEFAULT_BASE + 0x94)
-#define I2C_CNT		(I2C_DEFAULT_BASE + 0x98)
-#define I2C_DATA	(I2C_DEFAULT_BASE + 0x9c)
-#define I2C_CON		(I2C_DEFAULT_BASE + 0xA4)
-#define I2C_OA		(I2C_DEFAULT_BASE + 0xA8)
-#define I2C_SA		(I2C_DEFAULT_BASE + 0xAC)
-#define I2C_PSC		(I2C_DEFAULT_BASE + 0xB0)
-#define I2C_SCLL	(I2C_DEFAULT_BASE + 0xB4)
-#define I2C_SCLH	(I2C_DEFAULT_BASE + 0xB8)
-#define I2C_SYSTEST	(I2C_DEFAULT_BASE + 0xBc)
+#define I2C_REV		(i2c_base + 0x00)
+#define I2C_IE		(i2c_base + 0x2C)
+#define I2C_STAT	(i2c_base + 0x28)
+#define I2C_BUF		(i2c_base + 0x94)
+#define I2C_CNT		(i2c_base + 0x98)
+#define I2C_DATA	(i2c_base + 0x9c)
+#define I2C_CON		(i2c_base + 0xA4)
+#define I2C_OA		(i2c_base + 0xA8)
+#define I2C_SA		(i2c_base + 0xAC)
+#define I2C_PSC		(i2c_base + 0xB0)
+#define I2C_SCLL	(i2c_base + 0xB4)
+#define I2C_SCLH	(i2c_base + 0xB8)
+#define I2C_SYSTEST	(i2c_base + 0xBc)
 
 /* I2C masks */
 

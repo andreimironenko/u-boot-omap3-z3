@@ -106,18 +106,17 @@ int usb_init(void)
 	asynch_allowed = 1;
 	usb_hub_reset();
 	/* init low_level USB */
-	printf("USB:   ");
 	result = usb_lowlevel_init();
 	/* if lowlevel init is OK, scan the bus for devices
 	 * i.e. search HUBs and configure them */
 	if (result == 0) {
-		printf("scanning bus for devices... ");
+		printf("USB:   scanning bus for devices... ");
 		running = 1;
 		usb_scan_devices();
 		usb_started = 1;
 		return 0;
 	} else {
-		printf("Error, couldn't init Lowlevel part\n");
+		//printf("USB:   Error, couldn't init Lowlevel part\n");
 		usb_started = 0;
 		return -1;
 	}

@@ -35,6 +35,7 @@
 #define __raw_readc(a)		(*(volatile char *)(a))
 #define __raw_writec(v, a)	(*(volatile char *)(a) = (v))
 
+
 #define WR_MEM_32(a, d) (*(volatile int*)(a) = (d))
 #define RD_MEM_32(a) (*(volatile int*)(a))
 #define WR_MEM_8(a, d) (*(volatile char*)(a) = (d))
@@ -143,6 +144,32 @@ static void voltage_scale_init(void)
 }
 #endif
 
+u32
+dram_autosize(void)
+{
+	volatile u32 *ram_ptr;
+	unsigned int offset;
+	u32 retval = PHYS_DRAM_1_SIZE;
+
+	for ( offset = PHYS_DRAM_1_SIZE;
+		  offset >=  PHYS_DRAM_1_MIN; 
+		  offset >>= 1 ) {
+		ram_ptr = (volatile u32 *) (PHYS_DRAM_1+offset-4);
+		*ram_ptr = offset;
+
+	}
+	for ( offset=PHYS_DRAM_1_MIN; 
+		  offset <= PHYS_DRAM_1_SIZE;
+		  offset <<= 1 ) {
+		ram_ptr = (volatile u32 *) (PHYS_DRAM_1+offset-4);
+		if ( *ram_ptr == offset ) {
+			retval = offset;
+		}
+	}
+
+	return retval;
+}
+
 /*******************************************************
  * Routine: delay
  * Description: spinning delay to use before udelay works
@@ -163,15 +190,27 @@ int board_init(void)
 	/* Get Timer and UART out of reset */
 
 	/* UART softreset */
-	regVal = __raw_readl(UART_SYSCFG);
+	regVal = __raw_readl(UART2_SYSCFG);
 	regVal |= 0x2;
-	__raw_writel(regVal, UART_SYSCFG);
-	while( (__raw_readl(UART_SYSSTS) & 0x1) != 0x1);
+	__raw_writel(regVal, UART2_SYSCFG);
+	while( (__raw_readl(UART2_SYSSTS) & 0x1) != 0x1);
 
 	/* Disable smart idle */
-	regVal = __raw_readl(UART_SYSCFG);
+	regVal = __raw_readl(UART2_SYSCFG);
 	regVal |= (1<<3);
-	__raw_writel(regVal, UART_SYSCFG);
+	__raw_writel(regVal, UART2_SYSCFG);
+
+	/* UART softreset */
+	regVal = __raw_readl(UART0_SYSCFG);
+	regVal |= 0x2;
+	__raw_writel(regVal, UART0_SYSCFG);
+//	while( (__raw_readl(UART0_SYSSTS) & 0x1) != 0x1);
+	delay(100);
+
+	/* Disable smart idle */
+	regVal = __raw_readl(UART0_SYSCFG);
+	regVal |= (1<<3);
+	__raw_writel(regVal, UART0_SYSCFG);
 
 	gd->bd->bi_arch_number = MACH_TYPE_TI8168EVM;
 
@@ -179,6 +218,7 @@ int board_init(void)
 	gd->bd->bi_boot_params = PHYS_DRAM_1 + 0x100;
 
 	gpmc_init();
+
 
 	return 0;
 }
@@ -189,8 +229,8 @@ extern void davinci_eth_set_mac_addr(const u_int8_t *addr);
 int board_eth_init(bd_t *bis)
 {
 	/* TODO : read MAC address from EFUSE */
-        u_int8_t mac_addr[6];
-        u_int32_t mac_hi,mac_lo;
+	u_int8_t mac_addr[6];
+	u_int32_t mac_hi,mac_lo;
 
 	if(!eth_getenv_enetaddr("ethaddr", mac_addr)) {
 		printf("<ethaddr> not set. Reading from E-fuse\n");
@@ -207,12 +247,12 @@ int board_eth_init(bd_t *bis)
 		eth_setenv_enetaddr("ethaddr", mac_addr);
 	}
 
-        if(is_valid_ether_addr(mac_addr)) {
-                printf("Detected MACID:%x:%x:%x:%x:%x:%x\n",mac_addr[0],
-                        mac_addr[1], mac_addr[2], mac_addr[3],
-                        mac_addr[4], mac_addr[5]);
-                davinci_eth_set_mac_addr(mac_addr);
-        } else {
+	if(is_valid_ether_addr(mac_addr)) {
+		printf("Detected MACID:%x:%x:%x:%x:%x:%x\n",mac_addr[0],
+			   mac_addr[1], mac_addr[2], mac_addr[3],
+			   mac_addr[4], mac_addr[5]);
+		davinci_eth_set_mac_addr(mac_addr);
+	} else {
 		printf("Caution:using static MACID!! Set <ethaddr> variable\n");
 	}
 
@@ -220,6 +260,7 @@ int board_eth_init(bd_t *bis)
 	return 0;
 }
 #endif
+
 
 /*
  * Configure DRAM banks
@@ -230,10 +271,7 @@ int dram_init(void)
 {
 	/* Fill up board info */
 	gd->bd->bi_dram[0].start = PHYS_DRAM_1;
-	gd->bd->bi_dram[0].size = PHYS_DRAM_1_SIZE;
-
-	gd->bd->bi_dram[1].start = PHYS_DRAM_2;
-	gd->bd->bi_dram[1].size = PHYS_DRAM_2_SIZE;
+	gd->bd->bi_dram[0].size = dram_autosize();
 
 	return 0;
 }
@@ -441,12 +479,13 @@ static void config_ti816x_sdram_ddr(void)
 	__raw_writel(0x2, CM_DEFAULT_DMM_CLKCTRL);			/*Enable EMIF1 Clock*/
 	while((__raw_readl(CM_DEFAULT_DMM_CLKCTRL)) != 0x2);		/*Poll for Module is functional*/
 
-#ifdef CONFIG_MINIMAL
+#if defined(DMM_DISABLE_INTERLEAVING)
 	/* Program the DMM to for non-interleaved configuration */
 	__raw_writel(0x0, DMM_LISA_MAP__0);
 	__raw_writel(0x0, DMM_LISA_MAP__1);
 	__raw_writel(0x80500100, DMM_LISA_MAP__2);
 	__raw_writel(0xA0500200, DMM_LISA_MAP__3);
+
 #else
 
 /* In case of NOR boot, we use XIP and this has inherent delay.
@@ -463,6 +502,7 @@ static void config_ti816x_sdram_ddr(void)
 	__raw_writel(0x80640300, DMM_LISA_MAP__2);
 	__raw_writel(0xC0640320, DMM_LISA_MAP__3);
 #endif
+
 
 	/*Enable Tiled Access*/
 	__raw_writel(0x80000000, DMM_PAT_BASE_ADDR);
@@ -536,6 +576,26 @@ static void config_ti816x_sdram_ddr(void)
 
 	walking_one_test(0x80000000, 0x9fffffff);
 #endif
+
+	ddr_delay(10000);
+	if ( dram_autosize() == 0x20000000 ) {
+#if 0 /* Rewriting LISA config causes a hang */
+#if defined(DMM_DISABLE_INTERLEAVING)
+		/* Program the DMM to for non-interleaved configuration */
+		__raw_writel(0x0, DMM_LISA_MAP__0);
+		__raw_writel(0x0, DMM_LISA_MAP__1);
+		__raw_writel(0x80400100, DMM_LISA_MAP__2);
+		__raw_writel(0x90400200, DMM_LISA_MAP__3);
+
+#else
+		/* Program the DMM to for interleaved configuration */
+		__raw_writel(0x80540300, DMM_LISA_MAP__0);
+		__raw_writel(0xC0540320, DMM_LISA_MAP__1);
+		__raw_writel(0x80540300, DMM_LISA_MAP__2);
+		__raw_writel(0xC0540320, DMM_LISA_MAP__3);
+#endif
+#endif		
+	}
 }
 
 #ifdef CONFIG_TI816X_DDR3_SW_LEVELING
@@ -742,7 +802,8 @@ static void config_ti816x_sdram_ddr(void)
 	__raw_writel(0x2, CM_DEFAULT_DMM_CLKCTRL);				/*Enable EMIF1 Clock*/
 	while((__raw_readl(CM_DEFAULT_DMM_CLKCTRL)) != 0x2);		/*Poll for Module is functional*/
 
-#ifdef CONFIG_MINIMAL
+//#ifdef CONFIG_MINIMAL
+#if defined(DMM_DISABLE_INTERLEAVING)
 	/* Program the DMM for non-interleave setting */
 	__raw_writel(0x0, DMM_LISA_MAP__0);
 	__raw_writel(0x0, DMM_LISA_MAP__1);
@@ -913,6 +974,16 @@ static void ddr_pll_init_ti816x(u32 sil_index, u32 clk_index)
  ********************************************************/
 int misc_init_r (void)
 {
+    char temp[20];
+	u32 gpmc_cs2_config[6] = {
+		0x00001000,
+		0x001f1f01,
+		0x00080803,
+		0x1c0b1c0a,
+		0x041f1F1F,
+		0x1F0F04C4
+	};
+
 	#ifdef CONFIG_TI816X_ASCIIART
 	int i = 0, j = 0;
 	char ti816x[23][79] = {
@@ -948,6 +1019,17 @@ int misc_init_r (void)
 	}
 	printf("\n");
 	#endif
+
+#if defined( CONFIG_GPMC_CS2_BASE )	
+	enable_gpmc_cs_config( (const u32 *)gpmc_cs2_config,
+						   (void *) 0x500000c0,
+						   CONFIG_GPMC_CS2_BASE,
+						   CONFIG_GPMC_CS2_SIZE );
+#endif
+
+	sprintf( temp, "z3dram=%luM", gd->bd->bi_dram[0].size / (1024*1024) );
+	setenv("z3dram", temp );
+						   
 	return 0;
 }
 
@@ -1079,14 +1161,18 @@ static void peripheral_enable(void)
 	__raw_writel(0x2, CM_ALWON_I2C_0_CLKCTRL);
 	while(__raw_readl(CM_ALWON_I2C_0_CLKCTRL) != 0x2);
 
+	/* I2C1 */
+	__raw_writel(0x2, CM_ALWON_I2C_1_CLKCTRL);
+	while(__raw_readl(CM_ALWON_I2C_1_CLKCTRL) != 0x2);
+
 	/* Ethernet */
 	__raw_writel(0x2, CM_ETHERNET_CLKSTCTRL);
 	__raw_writel(0x2, CM_ALWON_ETHERNET_0_CLKCTRL);
 	__raw_writel(0x2, CM_ALWON_ETHERNET_1_CLKCTRL);
 
 	/* HSMMC */
-	__raw_writel(0x2, CM_ALWON_HSMMC_CLKCTRL);
-	while(__raw_readl(CM_ALWON_HSMMC_CLKCTRL) != 0x2);
+	__raw_writel(0x2, CM_ALWON_TI816X_HSMMC_CLKCTRL);
+	while(__raw_readl(CM_ALWON_TI816X_HSMMC_CLKCTRL) != 0x2);
 
 	/* WDT */
 	/* For WDT to be functional, it needs to be first stopped by writing
@@ -1120,10 +1206,11 @@ void prcm_init(u32 in_ddr)
 	__raw_writel(0x0, 0x48180324);
 
 	//if (is_cpu_family() == CPU_TI816X) {
+	if ( get_cpu_type() == TI8168 ) {
 		main_pll_init_ti816x(clk_index, sil_index);
 		if (!in_ddr)
 			ddr_pll_init_ti816x(clk_index, sil_index);
-	//}
+	}
 
 	/* With clk freqs setup to desired values, enable the required peripherals */
 	peripheral_enable();
@@ -1134,14 +1221,27 @@ void prcm_init(u32 in_ddr)
  *****************************************************************************/
 void set_muxconf_regs(void)
 {
-	/* HSMMC Padconfig */
-	__raw_writew((PTD | EN | M0), MMC_POW);
-	__raw_writew((PTD | DIS | M0), MMC_CLK);
-	__raw_writew((PTU | EN | M0), MMC_CMD);
-	__raw_writew((PTU | EN | M0), MMC_DAT0);
-	__raw_writew((PTU | EN | M0), MMC_DAT1_SDIRQ);
-	__raw_writew((PTU | EN | M0), MMC_DAT2_SDRW);
-	__raw_writew((PTU | EN | M0), MMC_DAT3);
+	if ( get_cpu_type() == TI8168 ) {
+		/* HSMMC Padconfig */
+		__raw_writew((PTD | EN | M0), MMC_POW);
+		__raw_writew((PTD | DIS | M0), MMC_CLK);
+		__raw_writew((PTU | DIS | M0), MMC_CMD);
+		__raw_writew((PTU | DIS | M0), MMC_DAT0);
+		__raw_writew((PTU | DIS | M0), MMC_DAT1_SDIRQ);
+		__raw_writew((PTU | DIS | M0), MMC_DAT2_SDRW);
+		__raw_writew((PTU | DIS | M0), MMC_DAT3);
+		__raw_writew((PTU | DIS | M0), MMC_CD);
+		__raw_writew((PTU | DIS | M0), MMC_WP);
+	} else {
+#if 0 // DM814X pinmux register bits are different
+		__raw_writew((PTD | DIS | M0), DM814X_MMC_CLK);
+		__raw_writew((PTU | EN | M0), DM814X_MMC_CMD);
+		__raw_writew((PTU | EN | M0), DM814X_MMC_DAT0);
+		__raw_writew((PTU | EN | M0), DM814X_MMC_DAT1_SDIRQ);
+		__raw_writew((PTU | EN | M0), DM814X_MMC_DAT2_SDRW);
+		__raw_writew((PTU | EN | M0), DM814X_MMC_DAT3);
+#endif
+	}
 }
 
 /**********************************************************

@@ -120,7 +120,24 @@ u32 pg_val_ti814x(u32 pg1_val, u32 pg2_val)
 {
 	/* PG2.1 devices should read 0x3 as chip rev */
 	if (PG2_1 == get_cpu_rev())
-		return pg2_val;
+        return pg2_val;
+	else
+		return pg1_val;
+}
+
+
+/***************************************************
+ * u32 pg_val_ti814x() - return the PG specifi value
+ ***************************************************/
+u32 pg_val_ti814x_ddr(u32 pg1_val, u32 pg2_val)
+{
+	/* PG2.1 devices should read 0x3 as chip rev */
+	if (PG2_1 == get_cpu_rev())
+		#ifdef CONFIG_TI814X_EVM_DDR2
+			return pg1_val;
+		#else
+			return pg2_val;
+		#endif
 	else
 		return pg1_val;
 }
@@ -131,6 +148,9 @@ u32 pg_val_ti814x(u32 pg1_val, u32 pg2_val)
  */
 int print_cpuinfo (void)
 {
+#ifdef CONFIG_TI814X_MIN_CONFIG
+    return 0;
+#else
 	char *cpu_s, *sec_s;
 	int arm_freq, ddr_freq , rev;
 
@@ -208,10 +228,12 @@ int print_cpuinfo (void)
 	arm_freq = ((OSC_0_FREQ / (MODENA_N + 1) * MODENA_M) / MODENA_M2);
 	ddr_freq = ((OSC_0_FREQ / (DDR_N + 1) * DDR_M) / DDR_M2);
 #endif
+
 	printf("ARM clk: %dMHz\n", arm_freq);
 	printf("DDR clk: %dMHz\n", ddr_freq);
 	printf("\n");
 
 	return 0;
+#endif
 }
 #endif	/* CONFIG_DISPLAY_CPUINFO */
