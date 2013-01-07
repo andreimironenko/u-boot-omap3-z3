@@ -74,7 +74,7 @@
 #if defined(CONFIG_Z3_FACTORY)
 #define CONFIG_BOOTCOMMAND 	"nand erase; setenv netretry yes ; bootp; go 0x81000000" 
 #else
-#define CONFIG_BOOTCOMMAND 	"nand read.i 0x81000000 0x80000 0x40000; go 0x81000000" 
+#define CONFIG_BOOTCOMMAND 	"nandecc hw 0; nand read.i 0x81000000 0x20000 0x40000; go 0x81000000" 
 #endif
 # elif defined(CONFIG_SD_BOOT)		/* Autoload the 2nd stage from SD */
 #  define CONFIG_MMC			1

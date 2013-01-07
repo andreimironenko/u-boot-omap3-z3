@@ -3218,6 +3218,8 @@ ti8148_evm_min_sd:	unconfig
 		echo "Setting up TI8148 minimal build for 1st stage..." ; \
 		if [ "$(findstring nand,$@)" ] ; then \
 			echo "#define CONFIG_NAND_BOOT"	>>$(obj)include/config.h ; \
+                        echo "#define CONFIG_BOOTDELAY 1" >>$(obj)include/config.h ; \
+			echo "#define CONFIG_CMD_LOADB" >>$(obj)include/config.h ; \
 			echo "#define CONFIG_SYS_NO_FLASH"    >>$(obj)include/config.h ; \
 			echo "TI_IMAGE = u-boot.min.nand" >> $(obj)board/ti/ti8148/config.tmp;\
 		elif [ "$(findstring spi,$@)" ] ; then \
@@ -3227,6 +3229,8 @@ ti8148_evm_min_sd:	unconfig
 			echo "TI_IMAGE = u-boot.min" >> $(obj)board/ti/ti8148/config.tmp;\
 		elif [ "$(findstring uart,$@)" ] ; then \
 			echo "#define CONFIG_NAND_BOOT"	>>$(obj)include/config.h ; \
+			echo "#define CONFIG_BOOTDELAY 1" >>$(obj)include/config.h ; \
+			echo "#define CONFIG_CMD_LOADB" >>$(obj)include/config.h ; \
 			echo "#define CONFIG_SYS_NO_FLASH"    >>$(obj)include/config.h ; \
 			echo "#define CONFIG_TI81XX_PERIPHERAL_BOOT"	>>$(obj)include/config.h; \
 			echo "TI_IMAGE = u-boot.min.uart" >> $(obj)board/ti/ti8148/config.tmp;\
