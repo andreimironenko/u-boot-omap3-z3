@@ -61,7 +61,7 @@
 #  define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=yes\0" \
     "dhcp_vendor-class-identifier=DM814x_Stage1\0" \
-	"bootcmd=sf probe 0; sf read 0x81000000 0x20000 0x40000; go 0x81000000\0" \
+	"bootcmd=sf probe 0; sf read 0x81000000 0x80000 0x40000; go 0x81000000\0" \
 
 # elif defined(CONFIG_NAND_BOOT)		/* Autoload the 2nd stage from NAND */
 #  define CONFIG_NAND			1
@@ -74,7 +74,7 @@
 #if defined(CONFIG_Z3_FACTORY)
 #define CONFIG_BOOTCOMMAND 	"nand erase; setenv netretry yes ; bootp; go 0x81000000" 
 #else
-#define CONFIG_BOOTCOMMAND 	"nandecc hw 0; nand read.i 0x81000000 0x20000 0x40000; go 0x81000000" 
+#define CONFIG_BOOTCOMMAND 	"nandecc hw 0; nand read.i 0x81000000 0x80000 0x40000; go 0x81000000" 
 #endif
 # elif defined(CONFIG_SD_BOOT)		/* Autoload the 2nd stage from SD */
 #  define CONFIG_MMC			1
