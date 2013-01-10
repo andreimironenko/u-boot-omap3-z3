@@ -64,5 +64,6 @@ cscope.*
 /onenand_ipl/board/*/onenand*
 /onenand_ipl/board/*/*.S
 board/ti/ti8148/config.tmp
+tools/mkenvimage
 DUMMY
 

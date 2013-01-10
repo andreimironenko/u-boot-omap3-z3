@@ -171,7 +171,7 @@ $(obj)inca-swap-bytes$(SFX):	$(obj)inca-swap-bytes.o
 	$(HOSTSTRIP) $@
 
 $(obj)mkenvimage$(SFX):        $(obj)crc32.o $(obj)mkenvimage.o
-       $(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
+	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
 
 $(obj)mkimage$(SFX):	$(obj)crc32.o \
 			$(obj)default_image.o \
