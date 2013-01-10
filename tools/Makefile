@@ -62,6 +62,7 @@ BIN_FILES-$(CONFIG_CMD_NET) += gen_eth_addr$(SFX)
 BIN_FILES-$(CONFIG_CMD_LOADS) += img2srec$(SFX)
 BIN_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes$(SFX)
 BIN_FILES-y += mkimage$(SFX)
+BIN_FILES-y += mkenvimage$(SFX)
 BIN_FILES-$(CONFIG_NETCONSOLE) += ncb$(SFX)
 BIN_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1$(SFX)
 
@@ -84,6 +85,7 @@ OBJ_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes.o
 NOPED_OBJ_FILES-y += kwbimage.o
 NOPED_OBJ_FILES-y += imximage.o
 NOPED_OBJ_FILES-y += tiimage.o
+NOPED_OBJ_FILES-y += mkenvimage.o
 NOPED_OBJ_FILES-y += mkimage.o
 OBJ_FILES-$(CONFIG_NETCONSOLE) += ncb.o
 NOPED_OBJ_FILES-y += os_support.o
@@ -167,6 +169,9 @@ $(obj)img2srec$(SFX):	$(obj)img2srec.o
 $(obj)inca-swap-bytes$(SFX):	$(obj)inca-swap-bytes.o
 	$(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
+
+$(obj)mkenvimage$(SFX):        $(obj)crc32.o $(obj)mkenvimage.o
+       $(HOSTCC) $(HOSTCFLAGS) $(HOSTLDFLAGS) -o $@ $^
 
 $(obj)mkimage$(SFX):	$(obj)crc32.o \
 			$(obj)default_image.o \
