@@ -195,7 +195,9 @@
 
 # define CONFIG_EXTRA_ENV_SETTINGS \
     "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
-    "factoryload=nandecc hw 0; setenv bootcmd 'run nand_boot_ubifs';"
+    "factoryload=nandecc hw 0; mw.b 0x81000000 0x00 0x20000;\
+     nand read.i 0x81000000 0x260000 0x20000; source 0x81000000; \
+     setenv bootcmd 'run nand_boot_ubifs';"
 
 #define CONFIG_BOOTCOMMAND 	"run factoryload"
 
