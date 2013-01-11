@@ -138,6 +138,7 @@
 # define CONFIG_SPI			1
 # define CONFIG_I2C			1
 
+#if 0
 # define CONFIG_EXTRA_ENV_SETTINGS \
     "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
     "netretry=yes\0" \
@@ -190,8 +191,13 @@
             "echo UPDATE FAILED at ${laststage} ;" \
             "echo ; " \
         "fi\0"
+#endif
 
-//#define CONFIG_BOOTCOMMAND 	"run factoryload"
+# define CONFIG_EXTRA_ENV_SETTINGS \
+    "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
+    "factoryload=nandecc hw 0; setenv bootcmd 'run nand_boot_ubifs'";
+
+#define CONFIG_BOOTCOMMAND 	"run factoryload"
 
 #define CONFIG_USB_TI814X		1
 #define CONFIG_MUSB_HCD		    1
