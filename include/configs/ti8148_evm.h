@@ -191,7 +191,7 @@
             "echo ; " \
         "fi\0"
 
-#define CONFIG_BOOTCOMMAND 	"run factoryload"
+//#define CONFIG_BOOTCOMMAND 	"run factoryload"
 
 #define CONFIG_USB_TI814X		1
 #define CONFIG_MUSB_HCD		    1
@@ -429,7 +429,7 @@ extern unsigned int boot_flash_type;
 #endif
 
 //define this to enable Z3 SW updater support.
-#define CONFIG_Z3UPDATER
+//#define CONFIG_Z3UPDATER
 
 /* Unsupported features */
 #undef CONFIG_USE_IRQ

@@ -66,4 +66,7 @@ cscope.*
 board/ti/ti8148/config.tmp
 tools/mkenvimage
 DUMMY
+.cproject
+.project
+.settings
 
