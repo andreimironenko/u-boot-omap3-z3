@@ -1,10 +1,18 @@
 require u-boot-omap3-z3.inc
 
+#inherit srctree gitver
+inherit srctree
+
 COMPATIBLE_MACHINE = "dm814x-z3"
 
-PV = "${GITVER}"
+#PV = "${GITVER}"
+PV = "04.01.00.05"
 
 UBOOT_MACHINE = "ti8148_evm_min_nand"
+
+do_configure_prepend () {
+ oe_runmake distclean
+}
 
 do_compile_append () {
  oe_runmake u-boot.ti

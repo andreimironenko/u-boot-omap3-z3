@@ -1,12 +1,18 @@
 require u-boot-omap3-z3.inc 
 
-inherit srctree gitver
+#inherit srctree gitver
+inherit srctree
 
 COMPATIBLE_MACHINE = "dm814x-z3"
 
-PV = "${GITVER}"
+#PV = "${GITVER}"
+PV = "04.01.00.05"
 
 DEPENDS = "u-boot-min-uart-omap3-z3 u-boot-min-nand-omap3-z3"
+
+do_configure_prepend () {
+ oe_runmake distclean
+}
 
 do_install_append() {
  install -d ${D}${bindir}
