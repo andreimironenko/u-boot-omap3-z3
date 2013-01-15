@@ -72,5 +72,7 @@ DUMMY
 tools/env/crc32.c
 tools/env/fw_printenv
 tools/env/fw_setenv
+u-boot.min.nand
+u-boot.min.uart
 
 
