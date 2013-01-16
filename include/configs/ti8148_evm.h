@@ -37,7 +37,7 @@
 //# undef CONFIG_XYZMODEM
 
 # undef CONFIG_SYS_HUSH_PARSER
-//# define CONFIG_CMD_LOADB	/* loadb			*/
+# define CONFIG_CMD_LOADB	/* loadb			*/
 # define CONFIG_CMD_LOADY	/* loady */
 # define CONFIG_SETUP_PLL
 # define CONFIG_TI814X_CONFIG_DDR
