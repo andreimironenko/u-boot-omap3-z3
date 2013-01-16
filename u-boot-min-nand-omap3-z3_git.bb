@@ -8,6 +8,8 @@ PV = "${GITVER}"
 
 UBOOT_MACHINE = "ti8148_evm_min_nand"
 
+NANDUPDATE_DIR = "${DEPLOY_DIR_IMAGE}/nandupdate-${GITVER}"
+
 do_configure () {
    oe_runmake distclean
    oe_runmake ti8148_evm_min_nand 
@@ -18,8 +20,8 @@ do_compile_append () {
 }
 
 do_deploy () {
- install -d ${DEPLOY_DIR_IMAGE}/nandupdate
- install  ${S}/u-boot.min.nand ${DEPLOY_DIR_IMAGE}/nandupdate
+ install -d ${NANDUPDATE_DIR}
+ install  ${S}/u-boot.min.nand ${NANDUPDATE_DIR}
 }
  
-addtask deploy before do_package_stage after do_compile 
+#addtask deploy before do_package_stage after do_compile 
