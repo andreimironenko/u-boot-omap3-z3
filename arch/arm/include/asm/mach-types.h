@@ -3040,6 +3040,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_MSM8X60_QRDC         3060
 #define MACH_TYPE_SPEAR900             3061
 #define MACH_TYPE_PCONTROL_G20         3062
+#define MACH_TYPE_Z3_814x_MOD          3261
 
 #ifdef CONFIG_ARCH_EBSA110
 # ifdef machine_arch_type

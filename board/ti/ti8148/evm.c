@@ -158,7 +158,8 @@ int board_init(void)
 	__raw_writel(regVal, UART0_SYSCFG);
 
 	/* mach type passed to kernel */
-	gd->bd->bi_arch_number = MACH_TYPE_TI8148EVM;
+    //gd->bd->bi_arch_number = MACH_TYPE_TI8148EVM;
+    gd->bd->bi_arch_number = MACH_TYPE_Z3_814x_MOD;
 
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = PHYS_DRAM_1 + 0x100;
