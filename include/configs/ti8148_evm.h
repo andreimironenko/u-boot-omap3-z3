@@ -151,11 +151,11 @@
 #define        MTDIDS_DEFAULT                  "setenv mtdids 'nand0=nand';"
 #define        MTDPARTS_DEFAULT                "setenv mtdparts               \
                                                 mtdparts=nand:                \
-                                                128k(U-Boot-min)ro,           \
-                                                1920k(U-Boot),                \
-                                                512k(U-Boot Env),            \
-                                                4352k(Kernel),                \
-                                                204928k(File System);"
+                                                128k(min)ro,                  \
+                                                1920k(uboot),                 \
+                                                512k(env),                    \
+                                                4352k(kernel),                \
+                                                204928k(rootfs);"
 
 #if 0
 # define CONFIG_EXTRA_ENV_SETTINGS \
@@ -215,7 +215,7 @@
 # define CONFIG_EXTRA_ENV_SETTINGS \
     "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
     "factoryload=nandecc hw 0; mw.b 0x81000000 0x00 0x20000;\
-     nand read.i 0x81000000 0x260000 0x20000; source 0x81000000; \
+     nand read.i 0x81000000 0x200000 0x20000; source 0x81000000; \
      setenv bootcmd 'run nand_boot_ubifs';" \
      MTDIDS_DEFAULT \
      MTDPARTS_DEFAULT
