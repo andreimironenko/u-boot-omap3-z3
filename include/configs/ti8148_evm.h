@@ -48,7 +48,7 @@
 # define CONFIG_ENV_SIZE		0x400
 # define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (8 * 1024))
 # define CONFIG_SYS_PROMPT		"Z3-MIN# "
-#define CONFIG_BOOTDELAY 1
+#define CONFIG_BOOTDELAY
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_AUTOBOOT_KEYED		1
 #define CONFIG_AUTOBOOT_PROMPT		""
@@ -74,7 +74,8 @@
 #if defined(CONFIG_Z3_FACTORY)
 #define CONFIG_BOOTCOMMAND 	"nand erase; setenv netretry yes ; bootp; go 0x81000000" 
 #else
-#define CONFIG_BOOTCOMMAND 	"nandecc hw 0; nand read.i 0x81000000 0x80000 0x40000; go 0x81000000" 
+#define CONFIG_BOOTCOMMAND 	"nandecc hw 0; mw.b 0x81000000 0x00 0x60000; \
+                  nand read.i 0x81000000 0x20000 0x60000; go 0x81000000"
 #endif
 # elif defined(CONFIG_SD_BOOT)		/* Autoload the 2nd stage from SD */
 #  define CONFIG_MMC			1
@@ -122,7 +123,8 @@
 # include <config_cmd_default.h>
 # define CONFIG_SKIP_LOWLEVEL_INIT	/* 1st stage would have done the basic init */
 # define CONFIG_ENV_SIZE			0x2000
-# define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (32 * 1024))
+//# define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (32 * 1024))
+# define CONFIG_SYS_MALLOC_LEN	        (1024<<10) //1 MB, required by UBI layer
 # define CONFIG_ENV_OVERWRITE
 # define CONFIG_SYS_LONGHELP
 # define CONFIG_SYS_PROMPT		"Z3-DM8148# "
@@ -137,6 +139,23 @@
 # define CONFIG_NAND			1
 # define CONFIG_SPI			1
 # define CONFIG_I2C			1
+
+//Getting USBFS support
+#define CONFIG_CMD_UBIFS               1       /* Accessing UBIFS file system*/
+#define CONFIG_CMD_UBI                 1       /* UBI Support                */
+#define CONFIG_RBTREE                  1       /* RB-tree lib, used by UBI */
+#define CONFIG_LZO                     1
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS          1
+#define CONFIG_CMD_MTDPARTS
+#define        MTDIDS_DEFAULT                  "setenv mtdids 'nand0=nand';"
+#define        MTDPARTS_DEFAULT                "setenv mtdparts               \
+                                                mtdparts=nand:                \
+                                                128k(U-Boot-min)ro,           \
+                                                1920k(U-Boot),                \
+                                                512k(U-Boot Env),            \
+                                                4352k(Kernel),                \
+                                                204928k(File System);"
 
 #if 0
 # define CONFIG_EXTRA_ENV_SETTINGS \
@@ -197,7 +216,9 @@
     "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
     "factoryload=nandecc hw 0; mw.b 0x81000000 0x00 0x20000;\
      nand read.i 0x81000000 0x260000 0x20000; source 0x81000000; \
-     setenv bootcmd 'run nand_boot_ubifs';"
+     setenv bootcmd 'run nand_boot_ubifs';" \
+     MTDIDS_DEFAULT \
+     MTDPARTS_DEFAULT
 
 #define CONFIG_BOOTCOMMAND 	"run factoryload"
 
@@ -208,6 +229,7 @@
 #define CONFIG_CMD_STORAGE
 #define CONFIG_CMD_FAT         1
 #define CONFIG_SUPPORT_VFAT
+
 
 
 #endif
