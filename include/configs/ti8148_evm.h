@@ -61,7 +61,7 @@
 #  define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=yes\0" \
     "dhcp_vendor-class-identifier=DM814x_Stage1\0" \
-	"bootcmd=sf probe 0; sf read 0x81000000 0x80000 0x40000; go 0x81000000\0" \
+	"bootcmd=sf probe 0; sf read 0x81000000 0x20000 0x40000; go 0x81000000\0" \
 
 # elif defined(CONFIG_NAND_BOOT)		/* Autoload the 2nd stage from NAND */
 #  define CONFIG_NAND			1
@@ -124,7 +124,7 @@
 # define CONFIG_SKIP_LOWLEVEL_INIT	/* 1st stage would have done the basic init */
 # define CONFIG_ENV_SIZE			0x2000
 //# define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (32 * 1024))
-# define CONFIG_SYS_MALLOC_LEN	        (1024<<10) //1 MB, required by UBI layer
+# define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (768 * 1024))
 # define CONFIG_ENV_OVERWRITE
 # define CONFIG_SYS_LONGHELP
 # define CONFIG_SYS_PROMPT		"Z3-DM8148# "
@@ -140,14 +140,16 @@
 # define CONFIG_SPI			1
 # define CONFIG_I2C			1
 
+
 //Getting USBFS support
 #define CONFIG_CMD_UBIFS               1       /* Accessing UBIFS file system*/
-#define CONFIG_CMD_UBI                 1       /* UBI Support                */
 #define CONFIG_RBTREE                  1       /* RB-tree lib, used by UBI */
+#define CONFIG_CMD_UBI                 1       /* UBI Support                */
 #define CONFIG_LZO                     1
-#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_DEVICE              1
 #define CONFIG_MTD_PARTITIONS          1
-#define CONFIG_CMD_MTDPARTS
+#define CONFIG_CMD_MTDPARTS            1
+
 #define        MTDIDS_DEFAULT                  "setenv mtdids 'nand0=nand';"
 #define        MTDPARTS_DEFAULT                "setenv mtdparts               \
                                                 mtdparts=nand:                \
@@ -156,6 +158,17 @@
                                                 512k(env),                    \
                                                 4352k(kernel),                \
                                                 204928k(rootfs);"
+
+
+#if 0
+#define CONFIG_CMD_JFFS2               1      /* JFFS2 Support              */
+#define CONFIG_JFFS2_NAND              1      /* nand device jffs2 lives on */
+#define CONFIG_JFFS2_DEV               "nand0" /* start of jffs2 partition */
+#define CONFIG_JFFS2_PART_OFFSET        0x6C0000
+#define CONFIG_JFFS2_PART_SIZE          0xC820000   /* sz of jffs2 part */
+//#define CONFIG_MTD_NAND_ECC_JFFS2       1
+#endif
+
 
 #if 0
 # define CONFIG_EXTRA_ENV_SETTINGS \
@@ -219,6 +232,7 @@
      setenv bootcmd 'run nand_boot_ubifs';" \
      MTDIDS_DEFAULT \
      MTDPARTS_DEFAULT
+
 
 #define CONFIG_BOOTCOMMAND 	"run factoryload"
 
