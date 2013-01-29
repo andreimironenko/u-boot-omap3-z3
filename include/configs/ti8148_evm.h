@@ -149,6 +149,7 @@
 #define CONFIG_MTD_DEVICE              1
 #define CONFIG_MTD_PARTITIONS          1
 #define CONFIG_CMD_MTDPARTS            1
+#define CONFIG_DEBUG_LL                1
 
 #define        MTDIDS_DEFAULT                  "setenv mtdids 'nand0=nand';"
 #define        MTDPARTS_DEFAULT                "setenv mtdparts               \
