@@ -36,7 +36,8 @@
 //# undef CONFIG_SREC
 //# undef CONFIG_XYZMODEM
 
-# undef CONFIG_SYS_HUSH_PARSER
+//# undef CONFIG_SYS_HUSH_PARSER
+#define CONFIG_CMD_RUN            1
 # define CONFIG_CMD_LOADB	/* loadb			*/
 # define CONFIG_CMD_LOADY	/* loady */
 # define CONFIG_SETUP_PLL
@@ -45,7 +46,7 @@
 //# define CONFIG_TI814X_EVM_DDR3
 # define CONFIG_TI814X_EVM_DDR2
  
-# define CONFIG_ENV_SIZE		0x400
+# define CONFIG_ENV_SIZE		0x600//0x400
 # define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (8 * 1024))
 # define CONFIG_SYS_PROMPT		"Z3-MIN# "
 #define CONFIG_BOOTDELAY
@@ -65,17 +66,55 @@
 
 # elif defined(CONFIG_NAND_BOOT)		/* Autoload the 2nd stage from NAND */
 #  define CONFIG_NAND			1
+
+#if 0
 #  define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=yes\0" \
 	"ethaddr=00:01:02:03:04:05\0" \
 	"ipaddr=192.168.0.111\0" \
 	"serverip=192.168.0.6\0" \
     "dhcp_vendor-class-identifier=DM814x_Stage1\0"
+#endif
+
+#if !(defined CONFIG_TI814X_MIN_UART_CONFIG)
+#  define CONFIG_EXTRA_ENV_SETTINGS \
+    "serverip=192.168.0.205\0" \
+    "dhcp_vendor-class-identifier=DM814x\0"
+#else
+//#define TFT_UPDATE_PATH "tftp_path=z3/rootfs/boot/nandupdate\0"
+   #define CONFIG_EXTRA_ENV_SETTINGS \
+    "erase_all=nand erase 0 0xCEE0000;\0"\
+    TFT_UPDATE_PATH \
+    "min_update=echo Updating u-boot.min.nand ...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/u-boot.min.nand;nandecc hw 2;nand write 0x81000000 0 0x20000; nandecc hw 0;\0"\
+    "uboot_update=echo Updating u-boot.bin ...; mw.b 0x81000000 0xFF 0x60000;tftp 0x81000000 ${tftp_path}/u-boot.bin;nandecc sw; nand write.i 0x81000000 0x20000 0x60000;\0"\
+    "env_update=echo Updating u-boot env...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/boot.scr;nandecc hw 0; nand write.i 0x81000000 0x200000 0x20000;\0" \
+    "ubi_update=echo Updaing rootfs ubi.img...; mw.b 0x81000000 0xFF 0xC820000;tftp 0x81000000 ${tftp_path}/ubi.img;nandecc sw; nand write 0x81000000 0x6C0000 0xC820000;\0" \
+    "dhcp_vendor-class-identifier=DM814x\0"
+#endif
+
 #if defined(CONFIG_Z3_FACTORY)
 #define CONFIG_BOOTCOMMAND 	"nand erase; setenv netretry yes ; bootp; go 0x81000000" 
 #else
-#define CONFIG_BOOTCOMMAND 	"nandecc hw 0; mw.b 0x81000000 0x00 0x60000; \
+
+#if defined(CONFIG_TI814X_MIN_NAND_CONFIG)
+#define CONFIG_BOOTCOMMAND 	"nandecc sw; mw.b 0x81000000 0x00 0x60000; \
                   nand read.i 0x81000000 0x20000 0x60000; go 0x81000000"
+#endif //
+
+#if defined(CONFIG_TI814X_MIN_UART_CONFIG)
+#define CONFIG_BOOTCOMMAND            "\
+                  setenv autoload no ; \
+                  dhcp; \
+                  run erase_all; \
+                  run min_update; \
+                  run uboot_update; \
+                  run env_update; \
+                  run ubi_update; \
+                  reset; \
+                  "
+#endif //CONFIG_TI814X_MIN_UART_CONFIG)
+
+
 #endif
 # elif defined(CONFIG_SD_BOOT)		/* Autoload the 2nd stage from SD */
 #  define CONFIG_MMC			1
@@ -86,7 +125,7 @@
 
 # endif
 
-//# define CONFIG_SYS_HUSH_PARSER		/* Use HUSH parser to allow command parsing */
+//#define CONFIG_SYS_HUSH_PARSER	  /* Use HUSH parser to allow command parsing */
 
 #define CONFIG_CMD_NET 
 #undef CONFIG_SYS_LONGHELP
@@ -151,24 +190,14 @@
 #define CONFIG_CMD_MTDPARTS            1
 #define CONFIG_DEBUG_LL                1
 
-#define        MTDIDS_DEFAULT                  "setenv mtdids 'nand0=nand';"
+#define        MTDIDS_DEFAULT                  "setenv mtdids 'nand0=nand';\0"
 #define        MTDPARTS_DEFAULT                "setenv mtdparts               \
                                                 mtdparts=nand:                \
                                                 128k(min)ro,                  \
                                                 1920k(uboot),                 \
                                                 512k(env),                    \
                                                 4352k(kernel),                \
-                                                204928k(rootfs);"
-
-
-#if 0
-#define CONFIG_CMD_JFFS2               1      /* JFFS2 Support              */
-#define CONFIG_JFFS2_NAND              1      /* nand device jffs2 lives on */
-#define CONFIG_JFFS2_DEV               "nand0" /* start of jffs2 partition */
-#define CONFIG_JFFS2_PART_OFFSET        0x6C0000
-#define CONFIG_JFFS2_PART_SIZE          0xC820000   /* sz of jffs2 part */
-//#define CONFIG_MTD_NAND_ECC_JFFS2       1
-#endif
+                                                204928k(rootfs);\0"
 
 
 #if 0
@@ -226,16 +255,35 @@
         "fi\0"
 #endif
 
+#if 0
 # define CONFIG_EXTRA_ENV_SETTINGS \
     "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
     "factoryload=nandecc hw 0; mw.b 0x81000000 0x00 0x20000;\
      nand read.i 0x81000000 0x200000 0x20000; source 0x81000000; \
-     setenv bootcmd 'run nand_boot_ubifs';" \
      MTDIDS_DEFAULT \
-     MTDPARTS_DEFAULT
+     MTDPARTS_DEFAULT\
+     run nand_boot_ubifs;"
+#endif
+
+# define CONFIG_EXTRA_ENV_SETTINGS \
+    "dhcp_vendor-class-identifier=DM814x_UBoot\0"\
+    "factoryload=nandecc hw 0; mw.b 0x81000000 0x00 0x20000;\
+     nand read.i 0x81000000 0x200000 0x20000; source 0x81000000;\0"\
+     MTDIDS_DEFAULT \
+     MTDPARTS_DEFAULT\
+     "autoload=no\0"\
+     "ubifs_part_name=rootfs\0"\
+     "ubifs_hdr_offset=2048\0" \
+     "ubifs_part_id=4\0"\
+     "ubifs_dev=ubi0\0"\
+     "mtdids=nand0=nand\0"\
+     "mtdparts=mtdparts=nand:128k(u-boot-min)ro,1920k(u-boot),512k(environment),4352k(kernel),204928k(rootfs),-(reserved)\0"\
+     "bootargs_nand_ubifs=setenv bootargs console=${console} noinitrd rw ubi.mtd=${ubifs_part_id},${ubifs_hdr_offset} root=${ubifs_dev}:${ubifs_part_name} rootfstype=ubifs ${bootargs_nfs_misc}: ip=dhcp\0"\
+     "boot_ubi=echo Booting from NAND and UBIFS...; run factoryload; run setpower bootargs_nand_ubifs; nandecc sw; chpart ${ubifs_part_name}; ubi part ${ubifs_part_name} ${ubifs_hdr_offset}; ubifsmount ${ubifs_part_name}; ubifsload ${loadaddr} boot/${bootfile}; bootm ${loadaddr}\0"
 
 
-#define CONFIG_BOOTCOMMAND 	"run factoryload"
+
+#define CONFIG_BOOTCOMMAND 	"setenv bootcmd run boot_ubi; boot"
 
 #define CONFIG_USB_TI814X		1
 #define CONFIG_MUSB_HCD		    1
@@ -257,7 +305,8 @@
 # define CONFIG_TI814X_ASCIIART		1	/* The centaur */
 # define CONFIG_CMDLINE_EDITING
 #endif
-#define CONFIG_SYS_AUTOLOAD		"yes"
+//AM: No AUTOLOAD neither for u-boot-min-uart nor u-boot-min-nand
+//#define CONFIG_SYS_AUTOLOAD		"yes"
 #define CONFIG_CMD_CACHE
 #define CONFIG_CMD_ECHO
 

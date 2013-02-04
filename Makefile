@@ -3211,6 +3211,7 @@ ti8148_evm_min_sd:	unconfig
 	@mkdir -p $(obj)include
 	@echo "#define CONFIG_TI81XX"	>>$(obj)include/config.h
 	@echo "#define CONFIG_TI814X"	>>$(obj)include/config.h
+	@echo "#define TFT_UPDATE_PATH \"tftp_path=z3/rootfs/boot/nandupdate\\0\"" >>$(obj)include/config.h  
 	@if [ "$(findstring _min_,$@)" ] ; then \
 		echo "TEXT_BASE = 0x80700000" >> $(obj)board/ti/ti8148/config.tmp; \
 		echo "#define CONFIG_TI814X_MIN_CONFIG"    >>$(obj)include/config.h ; \
@@ -3220,21 +3221,25 @@ ti8148_evm_min_sd:	unconfig
 			echo "#define CONFIG_NAND_BOOT"	>>$(obj)include/config.h ; \
             echo "#define CONFIG_BOOTDELAY 1" >>$(obj)include/config.h ; \
 			echo "#define CONFIG_SYS_NO_FLASH"    >>$(obj)include/config.h ; \
+		    echo "#define CONFIG_TI814X_MIN_NAND_CONFIG"    >>$(obj)include/config.h ; \
 			echo "TI_IMAGE = u-boot.min.nand" >> $(obj)board/ti/ti8148/config.tmp;\
 		elif [ "$(findstring spi,$@)" ] ; then \
 			echo "#define CONFIG_SPI_BOOT" >>$(obj)include/config.h;\
 			echo "#define CONFIG_SYS_NO_FLASH"    >>$(obj)include/config.h ; \
 			echo "#define CONFIG_TI81XX_SPI_BOOT"	>>$(obj)include/config.h ; \
+		    echo "#define CONFIG_TI814X_MIN_SPI_CONFIG"    >>$(obj)include/config.h ; \
 			echo "TI_IMAGE = u-boot.min" >> $(obj)board/ti/ti8148/config.tmp;\
 		elif [ "$(findstring uart,$@)" ] ; then \
 			echo "#define CONFIG_NAND_BOOT"	>>$(obj)include/config.h ; \
 			echo "#define CONFIG_BOOTDELAY 3" >>$(obj)include/config.h ; \
 			echo "#define CONFIG_SYS_NO_FLASH"    >>$(obj)include/config.h ; \
 			echo "#define CONFIG_TI81XX_PERIPHERAL_BOOT"	>>$(obj)include/config.h; \
-			echo "TI_IMAGE = u-boot.min.uart" >> $(obj)board/ti/ti8148/config.tmp;\
+		    echo "#define CONFIG_TI814X_MIN_UART_CONFIG"    >>$(obj)include/config.h ; \
+		    echo "TI_IMAGE = u-boot.min.uart" >> $(obj)board/ti/ti8148/config.tmp;\
 		elif [ "$(findstring sd,$@)" ] ; then \
 			echo "#define CONFIG_SD_BOOT"    >>$(obj)include/config.h ; \
 			echo "#define CONFIG_SYS_NO_FLASH"    >>$(obj)include/config.h ; \
+		    echo "#define CONFIG_TI814X_MIN_SD_CONFIG"    >>$(obj)include/config.h ; \
 			echo "TI_IMAGE = u-boot.min.sd" >> $(obj)board/ti/ti8148/config.tmp;\
 		elif [ "$(findstring factory,$@)" ] ; then \
 			echo "#define CONFIG_NAND_BOOT"	>>$(obj)include/config.h ; \
