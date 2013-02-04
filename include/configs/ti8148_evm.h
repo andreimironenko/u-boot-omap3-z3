@@ -267,23 +267,23 @@
 
 # define CONFIG_EXTRA_ENV_SETTINGS \
     "dhcp_vendor-class-identifier=DM814x_UBoot\0"\
-    "factoryload=nandecc hw 0; mw.b 0x81000000 0x00 0x20000;\
+    "load_factory_env=nandecc sw; mw.b 0x81000000 0x00 0x20000;\
      nand read.i 0x81000000 0x200000 0x20000; source 0x81000000;\0"\
      MTDIDS_DEFAULT \
      MTDPARTS_DEFAULT\
      "autoload=no\0"\
+     "autostart=no\0"\
      "ubifs_part_name=rootfs\0"\
      "ubifs_hdr_offset=2048\0" \
      "ubifs_part_id=4\0"\
      "ubifs_dev=ubi0\0"\
      "mtdids=nand0=nand\0"\
      "mtdparts=mtdparts=nand:128k(u-boot-min)ro,1920k(u-boot),512k(environment),4352k(kernel),204928k(rootfs),-(reserved)\0"\
-     "bootargs_nand_ubifs=setenv bootargs console=${console} noinitrd rw ubi.mtd=${ubifs_part_id},${ubifs_hdr_offset} root=${ubifs_dev}:${ubifs_part_name} rootfstype=ubifs ${bootargs_nfs_misc}: ip=dhcp\0"\
-     "boot_ubi=echo Booting from NAND and UBIFS...; run factoryload; run setpower bootargs_nand_ubifs; nandecc sw; chpart ${ubifs_part_name}; ubi part ${ubifs_part_name} ${ubifs_hdr_offset}; ubifsmount ${ubifs_part_name}; ubifsload ${loadaddr} boot/${bootfile}; bootm ${loadaddr}\0"
+     "mount_ubi=echo Mounting UBIFS...; run setpower; nandecc sw; chpart ${ubifs_part_name}; ubi part ${ubifs_part_name} ${ubifs_hdr_offset}; ubifsmount ${ubifs_part_name};\0"\
+     "load_user_env=echo Loading user ENV ...;if ubifsload ${loadaddr} boot/boot.scr; then source ${loadaddr}; fi\0"\
 
 
-
-#define CONFIG_BOOTCOMMAND 	"setenv bootcmd run boot_ubi; boot"
+#define CONFIG_BOOTCOMMAND 	"run load_factory_env; run mount_ubi; run load_user_env; boot"
 
 #define CONFIG_USB_TI814X		1
 #define CONFIG_MUSB_HCD		    1
