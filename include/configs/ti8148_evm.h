@@ -81,10 +81,9 @@
     "serverip=192.168.0.205\0" \
     "dhcp_vendor-class-identifier=DM814x\0"
 #else
-//#define TFT_UPDATE_PATH "tftp_path=z3/rootfs/boot/nandupdate\0"
    #define CONFIG_EXTRA_ENV_SETTINGS \
     "erase_all=nand erase 0 0xCEE0000;\0"\
-    TFT_UPDATE_PATH \
+    TFTP_UPDATE_PATH \
     "min_update=echo Updating u-boot.min.nand ...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/u-boot.min.nand;nandecc hw 2;nand write 0x81000000 0 0x20000; nandecc hw 0;\0"\
     "uboot_update=echo Updating u-boot.bin ...; mw.b 0x81000000 0xFF 0x60000;tftp 0x81000000 ${tftp_path}/u-boot.bin;nandecc sw; nand write.i 0x81000000 0x20000 0x60000;\0"\
     "env_update=echo Updating u-boot env...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/boot.scr;nandecc hw 0; nand write.i 0x81000000 0x200000 0x20000;\0" \

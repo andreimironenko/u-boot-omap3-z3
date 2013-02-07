@@ -3211,7 +3211,7 @@ ti8148_evm_min_sd:	unconfig
 	@mkdir -p $(obj)include
 	@echo "#define CONFIG_TI81XX"	>>$(obj)include/config.h
 	@echo "#define CONFIG_TI814X"	>>$(obj)include/config.h
-	@echo "#define TFT_UPDATE_PATH \"tftp_path=z3/rootfs/boot/nandupdate\\0\"" >>$(obj)include/config.h  
+	@echo "#define TFTP_UPDATE_PATH \"tftp_path=$(TFTP_PATH)\\0\"" >>$(obj)include/config.h  
 	@if [ "$(findstring _min_,$@)" ] ; then \
 		echo "TEXT_BASE = 0x80700000" >> $(obj)board/ti/ti8148/config.tmp; \
 		echo "#define CONFIG_TI814X_MIN_CONFIG"    >>$(obj)include/config.h ; \
