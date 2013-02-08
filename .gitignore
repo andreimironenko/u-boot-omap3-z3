@@ -74,5 +74,4 @@ tools/env/fw_printenv
 tools/env/fw_setenv
 u-boot.min.nand
 u-boot.min.uart
-
-
+arch/arm/include/asm
