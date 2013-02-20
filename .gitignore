@@ -75,3 +75,4 @@ tools/env/fw_setenv
 u-boot.min.nand
 u-boot.min.uart
 arch/arm/include/asm
+tools/armv7a-mkimage
