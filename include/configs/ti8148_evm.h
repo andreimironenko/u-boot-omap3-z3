@@ -61,34 +61,25 @@
 #  define CONFIG_SPI			1
 #  define CONFIG_EXTRA_ENV_SETTINGS \
 	"verify=yes\0" \
-    "dhcp_vendor-class-identifier=DM814x_Stage1\0" \
+        "dhcp_vendor-class-identifier=DM814x_Stage1\0" \
 	"bootcmd=sf probe 0; sf read 0x81000000 0x20000 0x40000; go 0x81000000\0" \
 
 # elif defined(CONFIG_NAND_BOOT)		/* Autoload the 2nd stage from NAND */
 #  define CONFIG_NAND			1
 
-#if 0
-#  define CONFIG_EXTRA_ENV_SETTINGS \
-	"verify=yes\0" \
-	"ethaddr=00:01:02:03:04:05\0" \
-	"ipaddr=192.168.0.111\0" \
-	"serverip=192.168.0.6\0" \
-    "dhcp_vendor-class-identifier=DM814x_Stage1\0"
-#endif
 
-#if !(defined CONFIG_TI814X_MIN_UART_CONFIG)
-#  define CONFIG_EXTRA_ENV_SETTINGS \
-    "serverip=192.168.0.205\0" \
-    "dhcp_vendor-class-identifier=DM814x\0"
+#if !defined(CONFIG_TI814X_MIN_UART_CONFIG)
+   #define CONFIG_EXTRA_ENV_SETTINGS \
+    "dhcp_vendor-class-identifier=iptft-${ethaddr}\0"
 #else
    #define CONFIG_EXTRA_ENV_SETTINGS \
-    "erase_all=nand erase 0 0xCEE0000;\0"\
+    "erase_all=nand erase;\0"\
     TFTP_UPDATE_PATH \
     "min_update=echo Updating u-boot.min.nand ...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/u-boot.min.nand;nandecc hw 2;nand write 0x81000000 0 0x20000; nandecc sw;\0"\
     "uboot_update=echo Updating u-boot.bin ...; mw.b 0x81000000 0xFF 0x60000;tftp 0x81000000 ${tftp_path}/u-boot.bin;nandecc sw; nand write.i 0x81000000 0x20000 0x60000;\0"\
     "env_update=echo Updating u-boot env...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/default.scr;nandecc sw 0; nand write.i 0x81000000 0x200000 0x20000;\0" \
     "ubi_update=echo Updaing rootfs ubi.img...; mw.b 0x81000000 0xFF 0xC820000;tftp 0x81000000 ${tftp_path}/ubi.img;nandecc sw; nand write 0x81000000 0x6C0000 0xC820000;\0" \
-    "dhcp_vendor-class-identifier=DM814x\0"
+    "dhcp_vendor-class-identifier=iptft-${ethaddr}\0"
 #endif
 
 #if defined(CONFIG_Z3_FACTORY)
@@ -198,76 +189,11 @@
                                                 4352k(kernel),                \
                                                 204928k(rootfs);\0"
 
-
-#if 0
 # define CONFIG_EXTRA_ENV_SETTINGS \
-    "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
-    "netretry=yes\0" \
-    "factoryload=setenv laststage bootp; bootp ; status=$? ; " \
-        "if test ${status} = 0 ; then "\
-            "setenv laststage run_first_script ;" \
-            "source ${loadaddr} ; status=$? ; " \
-        "fi;" \
-        "if test ${status} = 0 ; then "\
-             "setenv laststage second_script ;" \
-             "setenv tftp_root ${bootdir} ;" \
-             "run update-env ; status=$? ;"  \
-             "run eraseenv ; " \
-             "setenv saved_tftp_root ${tftp_root} ;" \
-             "setenv tftp_root ${bootdir} ;" \
-        "fi;" \
-        "if test ${status} = 0 ; then " \
-            "setenv laststage stage1 ;" \
-            "run update-stage1; " \
-            "status=$? ; " \
-        "fi;" \
-        "if test ${status} = 0 ; then " \
-            "setenv laststage uboot ;" \
-            "run update-uboot; " \
-            "status=$? ; " \
-        "fi;" \
-        "if test ${status} = 0 ; then " \
-            "setenv laststage kernel ;" \
-            "run update-kernel; " \
-            "status=$? ; " \
-        "fi;" \
-        "if test ${status} = 0 ; then " \
-            "setenv laststage filesystem ;" \
-            "run update-ubifs; " \
-            "status=$? ; " \
-        "fi;" \
-        "if test ${status} = 0 ; then " \
-            "setenv laststage ;" \
-            "setenv tftp_root ${saved_tftp_root} ;" \
-            "setenv bootcmd 'run nand_boot_ubifs' ; setenv ethaddr ; saveenv ; " \
-        "fi;" \
-    "if test ${status} = 0 ; then "             \
-            "echo ; " \
-            "echo ************************************* ; " \
-            "echo ******** NAND update SUCCESS ******** ; " \
-            "echo ************************************* ; " \
-            "echo ; " \
-        "else " \
-            "echo ; " \
-            "echo UPDATE FAILED at ${laststage} ;" \
-            "echo ; " \
-        "fi\0"
-#endif
-
-#if 0
-# define CONFIG_EXTRA_ENV_SETTINGS \
-    "dhcp_vendor-class-identifier=DM814x_UBoot\0" \
-    "factoryload=nandecc hw 0; mw.b 0x81000000 0x00 0x20000;\
-     nand read.i 0x81000000 0x200000 0x20000; source 0x81000000; \
-     MTDIDS_DEFAULT \
-     MTDPARTS_DEFAULT\
-     run nand_boot_ubifs;"
-#endif
-
-# define CONFIG_EXTRA_ENV_SETTINGS \
-    "dhcp_vendor-class-identifier=DM814x_UBoot\0"\
+    "dhcp_vendor-class-identifier=iptft-${ethaddr:9:8}\0"\
     "load_factory_env=nandecc sw; mw.b 0x81000000 0x00 0x20000;\
      nand read.i 0x81000000 0x200000 0x20000; source 0x81000000;\0"\
+     TFTP_UPDATE_PATH \
      MTDIDS_DEFAULT \
      MTDPARTS_DEFAULT\
      "autoload=no\0"\
