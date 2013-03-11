@@ -27,29 +27,28 @@
 /* In the 1st stage we have just 110K, so cut down wherever possible */
 #ifdef CONFIG_TI814X_MIN_CONFIG
 
-# define CONFIG_CMD_MEMORY	/* for mtest and mw.b, mw.w...  */
+# define CONFIG_CMD_MEMORY	/* for mtest */
 # undef CONFIG_GZIP
 # undef CONFIG_ZLIB
 //# undef CONFIG_BOOTM_LINUX
-# undef CONFIG_BOOTM_NETBSD
-# undef CONFIG_BOOTM_RTEMS
-# undef CONFIG_SREC
-# undef CONFIG_XYZMODEM
+//# undef CONFIG_BOOTM_NETBSD
+//# undef CONFIG_BOOTM_RTEMS
+//# undef CONFIG_SREC
+//# undef CONFIG_XYZMODEM
 
 //# undef CONFIG_SYS_HUSH_PARSER
 #define CONFIG_CMD_RUN            1
-#define CONFIG_CMD_LOADB	/* loadb			*/
-//# define CONFIG_CMD_LOADY	/* loady */
-#define CONFIG_SETUP_PLL
-#define CONFIG_TI814X_CONFIG_DDR
+# define CONFIG_CMD_LOADB	/* loadb			*/
+# define CONFIG_CMD_LOADY	/* loady */
+# define CONFIG_SETUP_PLL
+# define CONFIG_TI814X_CONFIG_DDR
 // Z3 - DDR2
 //# define CONFIG_TI814X_EVM_DDR3
-#define CONFIG_TI814X_EVM_DDR2
+# define CONFIG_TI814X_EVM_DDR2
  
-//# define CONFIG_ENV_SIZE		0x600//0x400
-#define CONFIG_ENV_SIZE                 0xE00//3.5 Kbytes
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (8 * 1024))
-#define CONFIG_SYS_PROMPT		"Z3-MIN# "
+# define CONFIG_ENV_SIZE		0x600//0x400
+# define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (8 * 1024))
+# define CONFIG_SYS_PROMPT		"Z3-MIN# "
 #define CONFIG_BOOTDELAY
 #define CONFIG_ZERO_BOOTDELAY_CHECK
 #define CONFIG_AUTOBOOT_KEYED		1
@@ -66,25 +65,19 @@
 	"bootcmd=sf probe 0; sf read 0x81000000 0x20000 0x40000; go 0x81000000\0" \
 
 # elif defined(CONFIG_NAND_BOOT)		/* Autoload the 2nd stage from NAND */
-
-  #define CONFIG_NAND			1
-  #define CONFIG_NAND_ENV               1
-  #define CONFIG_CMD_SAVEENV                   /* saveenv */
-  #define CONFIG_CMD_SOURCE                    /*"source" command support*/
-  //#define CONFIG_ENV_OVERWRITE
+#  define CONFIG_NAND			1
 
 
 #if !defined(CONFIG_TI814X_MIN_UART_CONFIG)
    #define CONFIG_EXTRA_ENV_SETTINGS \
     "dhcp_vendor-class-identifier=iptft-${ethaddr}\0"
 #else
-
    #define CONFIG_EXTRA_ENV_SETTINGS \
     "erase_all=nand erase;\0"\
     TFTP_UPDATE_PATH \
     "min_update=echo Updating u-boot.min.nand ...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/u-boot.min.nand;nandecc hw 2;nand write 0x81000000 0 0x20000; nandecc sw;\0"\
     "uboot_update=echo Updating u-boot.bin ...; mw.b 0x81000000 0xFF 0x60000;tftp 0x81000000 ${tftp_path}/u-boot.bin;nandecc sw; nand write.i 0x81000000 0x20000 0x60000;\0"\
-    "env_update=echo Updating u-boot env...; mw.b 0x81000000 0x00 0x20000;tftp 0x81000000 ${tftp_path}/default.scr; source 0x81000000; saveenv;\0" \
+    "env_update=echo Updating u-boot env...; mw.b 0x81000000 0x00 0x20000;tftp 0x81000000 ${tftp_path}/default.scr;source 0x81000000;saveenv;\0" \
     "ubi_update=echo Updaing rootfs ubi.img...; mw.b 0x81000000 0xFF 0xC820000;tftp 0x81000000 ${tftp_path}/ubi.img;nandecc sw; nand write 0x81000000 0x6C0000 0xC820000;\0" \
     "dhcp_vendor-class-identifier=iptft-${ethaddr}\0"
 #endif
@@ -212,7 +205,7 @@
      "mtdids=nand0=nand\0"\
      "mtdparts=mtdparts=nand:128k(u-boot-min)ro,1920k(u-boot),512k(environment),4352k(kernel),204928k(rootfs),-(reserved)\0"\
      "mount_ubi=echo Mounting UBIFS...; run setpower; nandecc sw; chpart ${ubifs_part_name}; ubi part ${ubifs_part_name} ${ubifs_hdr_offset}; ubifsmount ${ubifs_part_name};\0"\
-     "load_user_env=echo Loading user ENV ...;mw.b ${loadaddr} 0x00 0x20000;if ubifsload ${loadaddr} boot/boot.scr; then source ${loadaddr}; fi\0"\
+     "load_user_env=echo Loading user ENV ...;if ubifsload ${loadaddr} boot/boot.scr; then source ${loadaddr}; fi\0"\
      "load_update_env=echo Loading user ENV ...;mw.b ${loadaddr} 0x00 0x20000;if ubifsload ${loadaddr} boot/update.scr;then source ${loadaddr}; fi\0"
 
 
@@ -240,7 +233,7 @@
 #endif
 //AM: No AUTOLOAD neither for u-boot-min-uart nor u-boot-min-nand
 //#define CONFIG_SYS_AUTOLOAD		"yes"
-//#define CONFIG_CMD_CACHE
+#define CONFIG_CMD_CACHE
 #define CONFIG_CMD_ECHO
 
 /*
@@ -360,6 +353,7 @@
 #  define CONFIG_SYS_MONITOR_LEN	(256 << 10)	/* Reserve 2 sectors */
 #  define CONFIG_SYS_FLASH_BASE		boot_flash_base
 #  define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_FLASH_BASE
+//#  define MNAND_ENV_OFFSET		0x260000	/* environment starts here */
 #  define MNAND_ENV_OFFSET		0x200000	/* environment starts here */
 #  define CONFIG_SYS_ENV_SECT_SIZE	boot_flash_sec
 #  define CONFIG_ENV_OFFSET		boot_flash_off
