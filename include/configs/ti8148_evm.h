@@ -77,7 +77,7 @@
     TFTP_UPDATE_PATH \
     "min_update=echo Updating u-boot.min.nand ...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/u-boot.min.nand;nandecc hw 2;nand write 0x81000000 0 0x20000; nandecc sw;\0"\
     "uboot_update=echo Updating u-boot.bin ...; mw.b 0x81000000 0xFF 0x60000;tftp 0x81000000 ${tftp_path}/u-boot.bin;nandecc sw; nand write.i 0x81000000 0x20000 0x60000;\0"\
-    "env_update=echo Updating u-boot env...; mw.b 0x81000000 0x00 0x20000;tftp 0x81000000 ${tftp_path}/default.scr;source 0x81000000;saveenv;\0" \
+    "env_update=echo Updating u-boot env...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/default.scr;nandecc sw 0; nand write.i 0x81000000 0x200000 0x20000;\0" \
     "ubi_update=echo Updaing rootfs ubi.img...; mw.b 0x81000000 0xFF 0xC820000;tftp 0x81000000 ${tftp_path}/ubi.img;nandecc sw; nand write 0x81000000 0x6C0000 0xC820000;\0" \
     "dhcp_vendor-class-identifier=iptft-${ethaddr}\0"
 #endif
@@ -191,8 +191,6 @@
 
 # define CONFIG_EXTRA_ENV_SETTINGS \
     "dhcp_vendor-class-identifier=iptft-${ethaddr:9:8}\0"\
-    "load_factory_env=nandecc sw; mw.b 0x81000000 0x00 0x20000;\
-     nand read.i 0x81000000 0x200000 0x20000; source 0x81000000;\0"\
      TFTP_UPDATE_PATH \
      MTDIDS_DEFAULT \
      MTDPARTS_DEFAULT\
@@ -203,13 +201,16 @@
      "ubifs_part_id=4\0"\
      "ubifs_dev=ubi0\0"\
      "mtdids=nand0=nand\0"\
+     "loadaddr=0x81000000\0"\
      "mtdparts=mtdparts=nand:128k(u-boot-min)ro,1920k(u-boot),512k(environment),4352k(kernel),204928k(rootfs),-(reserved)\0"\
      "mount_ubi=echo Mounting UBIFS...; run setpower; nandecc sw; chpart ${ubifs_part_name}; ubi part ${ubifs_part_name} ${ubifs_hdr_offset}; ubifsmount ${ubifs_part_name};\0"\
+     "load_default_env=echo Loading user ENV ...;if ubifsload ${loadaddr} boot/img/default.scr; then source ${loadaddr};fi\0"\
      "load_user_env=echo Loading user ENV ...;if ubifsload ${loadaddr} boot/boot.scr; then source ${loadaddr}; fi\0"\
      "load_update_env=echo Loading user ENV ...;mw.b ${loadaddr} 0x00 0x20000;if ubifsload ${loadaddr} boot/update.scr;then source ${loadaddr}; fi\0"
 
 
-#define CONFIG_BOOTCOMMAND 	"run load_factory_env; run mount_ubi; run load_user_env; run load_update_env; boot"
+//#define CONFIG_BOOTCOMMAND 	"run load_factory_env; run mount_ubi; run load_user_env; run load_update_env; boot"
+#define CONFIG_BOOTCOMMAND      "run mount_ubi; run load_user_env; run load_update_env; run bootmode"
 
 #define CONFIG_USB_TI814X		1
 #define CONFIG_MUSB_HCD		    1
