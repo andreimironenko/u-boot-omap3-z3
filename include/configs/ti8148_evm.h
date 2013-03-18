@@ -98,11 +98,11 @@
                   run erase_all; \
                   run min_update; \
                   run uboot_update; \
-                  run env_update; \
                   run ubi_update; \
                   reset; \
                   "
 #endif //CONFIG_TI814X_MIN_UART_CONFIG)
+
 
 
 #endif
