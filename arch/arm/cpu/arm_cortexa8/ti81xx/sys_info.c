@@ -46,12 +46,14 @@ u32 get_cpu_rev(void)
 
 #ifdef CONFIG_TI814X
 	/* PG2.1 devices should read 0x3 as chip rev
-	 * Some PG2.1 devices have 0xc as chip rev
-	 */
+	* Some PG2.1 devices have 0xc as chip rev
+	*/
 	if (0x3 == rev || 0xc == rev)
-		return PG2_1;
+	  return PG2_1;
+	else if (0x4 <= rev)
+	  return PG3_0;
 	else
-		return PG1_0;
+	  return PG1_0;
 #endif
 	return rev;
 }
@@ -119,7 +121,7 @@ u32 pg_val_ti816x(u32 pg1_val, u32 pg2_val)
 u32 pg_val_ti814x(u32 pg1_val, u32 pg2_val)
 {
 	/* PG2.1 devices should read 0x3 as chip rev */
-	if (PG2_1 == get_cpu_rev())
+	if (PG2_1 <= get_cpu_rev())
         return pg2_val;
 	else
 		return pg1_val;
@@ -132,7 +134,7 @@ u32 pg_val_ti814x(u32 pg1_val, u32 pg2_val)
 u32 pg_val_ti814x_ddr(u32 pg1_val, u32 pg2_val)
 {
 	/* PG2.1 devices should read 0x3 as chip rev */
-	if (PG2_1 == get_cpu_rev())
+	if (PG2_1 <= get_cpu_rev())
 		#ifdef CONFIG_TI814X_EVM_DDR2
 			return pg1_val;
 		#else
@@ -189,11 +191,13 @@ int print_cpuinfo (void)
 			cpu_s, sec_s, rev);
 #else
 	if (rev < PG_END) {
-		char cpu_rev_str[3][4] = {"1.0", "2.1"}, *cpu_rev;
+	    char cpu_rev_str[PG_END][4] = {"1.0", "2.1", "3.0"};
+	    char *cpu_rev;
 
-		cpu_rev = cpu_rev_str[rev];
-		printf("TI%s-%s rev %s\n",
-			cpu_s, sec_s, cpu_rev);
+	    cpu_rev = cpu_rev_str[rev];
+	    printf("%s-%s rev %s\n",
+	            cpu_s, sec_s, cpu_rev);
+
 	} else {
 		printf("TI%s-%s rev ?????[%1x]\n",
 			cpu_s, sec_s, rev);
