@@ -150,24 +150,27 @@
 
 
 # include <config_cmd_default.h>
-# define CONFIG_SKIP_LOWLEVEL_INIT	/* 1st stage would have done the basic init */
-# define CONFIG_ENV_SIZE			0x2000
+#define CONFIG_SKIP_LOWLEVEL_INIT	/* 1st stage would have done the basic init */
+#define CONFIG_ENV_SIZE			0x2000
 //# define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (32 * 1024))
-# define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (768 * 1024))
-# define CONFIG_ENV_OVERWRITE
-# define CONFIG_SYS_LONGHELP
-# define CONFIG_SYS_PROMPT		"Z3-DM8148# "
-# define CONFIG_SYS_HUSH_PARSER		/* Use HUSH parser to allow command parsing */
-# define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-# define CONFIG_CMDLINE_TAG        	1	/* enable passing of ATAGs  */
-# define CONFIG_SETUP_MEMORY_TAGS  	1
-# define CONFIG_INITRD_TAG	  	1	/* Required for ramdisk support */
-# define CONFIG_BOOTDELAY		3	/* set to negative value for no autoboot */
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (768 * 1024))
+#define CONFIG_ENV_OVERWRITE
+#define CONFIG_SYS_LONGHELP
+#define CONFIG_SYS_PROMPT		"Z3-DM8148# "
+#define CONFIG_SYS_HUSH_PARSER		/* Use HUSH parser to allow command parsing */
+#define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
+#define CONFIG_CMDLINE_TAG        	1	/* enable passing of ATAGs  */
+#define CONFIG_SETUP_MEMORY_TAGS  	1
+#define CONFIG_INITRD_TAG	  	1	/* Required for ramdisk support */
+#define CONFIG_BOOTDELAY		3	/* set to negative value for no autoboot */
 /* By default, 2nd stage will have MMC, NAND, SPI and I2C support */
-# define CONFIG_MMC			1
-# define CONFIG_NAND			1
-# define CONFIG_SPI			1
-# define CONFIG_I2C			1
+#define CONFIG_MMC			1
+#define CONFIG_NAND			1
+#define CONFIG_SPI			1
+#define CONFIG_I2C			1
+
+//Enable Netconsole support
+#define CONFIG_NETCONSOLE   1
 
 
 //Getting USBFS support
@@ -190,23 +193,32 @@
                                                 204928k(rootfs);\0"
 
 # define CONFIG_EXTRA_ENV_SETTINGS \
-    "dhcp_vendor-class-identifier=iptft-${ethaddr:9:8}\0"\
-     TFTP_UPDATE_PATH \
-     MTDIDS_DEFAULT \
-     MTDPARTS_DEFAULT\
-     "autoload=no\0"\
-     "autostart=no\0"\
-     "ubifs_part_name=rootfs\0"\
-     "ubifs_hdr_offset=2048\0" \
-     "ubifs_part_id=4\0"\
-     "ubifs_dev=ubi0\0"\
-     "mtdids=nand0=nand\0"\
-     "loadaddr=0x81000000\0"\
-     "mtdparts=mtdparts=nand:128k(u-boot-min)ro,1920k(u-boot),512k(environment),4352k(kernel),204928k(rootfs),-(reserved)\0"\
-     "mount_ubi=echo Mounting UBIFS...; run setpower; nandecc sw; chpart ${ubifs_part_name}; ubi part ${ubifs_part_name} ${ubifs_hdr_offset}; ubifsmount ${ubifs_part_name};\0"\
-     "load_default_env=echo Loading user ENV ...;if ubifsload ${loadaddr} boot/img/default.scr; then source ${loadaddr};fi\0"\
-     "load_user_env=echo Loading user ENV ...;if ubifsload ${loadaddr} boot/boot.scr; then source ${loadaddr}; fi\0"\
-     "load_update_env=echo Loading user ENV ...;mw.b ${loadaddr} 0x00 0x20000;if ubifsload ${loadaddr} boot/update.scr;then source ${loadaddr}; fi\0"
+		"dhcp_vendor-class-identifier=iptft-${ethaddr:9:8}\0"\
+		TFTP_UPDATE_PATH \
+		MTDIDS_DEFAULT \
+		MTDPARTS_DEFAULT\
+		"autoload=no\0"\
+		"autostart=no\0"\
+		"stdout=nc\0"\
+		"stdin=nc\0"\
+		"stderr=nc\0"\
+		"ncip=${serverip}i\0"\
+		"ubifs_part_name=rootfs\0"\
+		"ubifs_hdr_offset=2048\0" \
+		"ubifs_part_id=4\0"\
+		"ubifs_dev=ubi0\0"\
+		"mtdids=nand0=nand\0"\
+		"loadaddr=0x81000000\0"\
+		"mtdparts=mtdparts=nand:128k(u-boot-min)ro,1920k(u-boot),512k(environment),4352k(kernel),204928k(rootfs),-(reserved)\0"\
+		"mount_ubi=echo Mounting UBIFS...; run setpower; nandecc sw; chpart ${ubifs_part_name}; ubi part ${ubifs_part_name} ${ubifs_hdr_offset}; ubifsmount ${ubifs_part_name};\0"\
+		"load_default_env=echo Loading user ENV ...;if ubifsload ${loadaddr} boot/img/default.scr; then source ${loadaddr};fi\0"\
+		"load_user_env=echo Loading user ENV ...;if ubifsload ${loadaddr} boot/boot.scr; then source ${loadaddr}; fi\0"\
+		"load_update_env=echo Loading user ENV ...;mw.b ${loadaddr} 0x00 0x20000;if ubifsload ${loadaddr} boot/update.scr;then source ${loadaddr}; fi\0"\
+		"tftp_min_update=echo Updating u-boot.min.nand ...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/u-boot.min.nand;nandecc hw 2;nand erase 0 0x20000;nand write 0x81000000 0 0x20000; nandecc sw;\0"\
+		"tftp_uboot_update=echo Updating u-boot.bin ...; mw.b 0x81000000 0xFF 0x60000;tftp 0x81000000 ${tftp_path}/u-boot.bin;nandecc sw; nand erase 0x20000 0x60000;nand write.i 0x81000000 0x20000 0x60000;\0"\
+		"tftp_env_update=echo Updating u-boot env...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/default.scr;nandecc sw 0; nand erase 0x200000 0x20000;nand write.i 0x81000000 0x200000 0x20000;\0" \
+		"tftp_ubi_update=echo Updaing rootfs ubi.img...; mw.b 0x81000000 0xFF 0xC820000;tftp 0x81000000 ${tftp_path}/ubi.img;nandecc sw; nand erase 0x6C0000 0xC820000;nand write 0x81000000 0x6C0000 0xC820000;\0"
+
 
 
 //#define CONFIG_BOOTCOMMAND 	"run load_factory_env; run mount_ubi; run load_user_env; run load_update_env; boot"
