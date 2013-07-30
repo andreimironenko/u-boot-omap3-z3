@@ -372,6 +372,20 @@ void eth_halt(void)
 	eth_current->state = ETH_STATE_PASSIVE;
 }
 
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+int eth_init_state_only(bd_t *bis)
+{
+	eth_current->state = ETH_STATE_ACTIVE;
+
+	return 0;
+}
+
+void eth_halt_state_only(void)
+{
+	eth_current->state = ETH_STATE_PASSIVE;
+}
+#endif
+
 int eth_send(volatile void *packet, int length)
 {
 	if (!eth_current)

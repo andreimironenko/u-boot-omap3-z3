@@ -3211,7 +3211,7 @@ ti8148_evm_min_sd:	unconfig
 	@mkdir -p $(obj)include
 	@echo "#define CONFIG_TI81XX"	>>$(obj)include/config.h
 	@echo "#define CONFIG_TI814X"	>>$(obj)include/config.h
-	@echo "#define TFTP_UPDATE_PATH \"tftp_path=$(TFTP_PATH)\\0\"" >>$(obj)include/config.h  
+	@echo "#define TFTP_UPDATE_PATH \"tftp_path=$(TFTP_PATH)\\0\"" >>$(obj)include/config.h
 	@if [ "$(findstring _min_,$@)" ] ; then \
 		echo "TEXT_BASE = 0x80700000" >> $(obj)board/ti/ti8148/config.tmp; \
 		echo "#define CONFIG_TI814X_MIN_CONFIG"    >>$(obj)include/config.h ; \
@@ -3225,13 +3225,14 @@ ti8148_evm_min_sd:	unconfig
 			echo "TI_IMAGE = u-boot.min.nand" >> $(obj)board/ti/ti8148/config.tmp;\
 		elif [ "$(findstring spi,$@)" ] ; then \
 			echo "#define CONFIG_SPI_BOOT" >>$(obj)include/config.h;\
+            echo "#define CONFIG_BOOTDELAY 1" >>$(obj)include/config.h ; \
 			echo "#define CONFIG_SYS_NO_FLASH"    >>$(obj)include/config.h ; \
 			echo "#define CONFIG_TI81XX_SPI_BOOT"	>>$(obj)include/config.h ; \
 		    echo "#define CONFIG_TI814X_MIN_SPI_CONFIG"    >>$(obj)include/config.h ; \
 			echo "TI_IMAGE = u-boot.min" >> $(obj)board/ti/ti8148/config.tmp;\
 		elif [ "$(findstring uart,$@)" ] ; then \
 			echo "#define CONFIG_NAND_BOOT"	>>$(obj)include/config.h ; \
-			echo "#define CONFIG_BOOTDELAY 3" >>$(obj)include/config.h ; \
+			echo "#define CONFIG_BOOTDELAY 1" >>$(obj)include/config.h ; \
 			echo "#define CONFIG_SYS_NO_FLASH"    >>$(obj)include/config.h ; \
 			echo "#define CONFIG_TI81XX_PERIPHERAL_BOOT"	>>$(obj)include/config.h; \
 		    echo "#define CONFIG_TI814X_MIN_UART_CONFIG"    >>$(obj)include/config.h ; \
@@ -3258,14 +3259,17 @@ ti8148_evm_min_sd:	unconfig
 		if [ "$(findstring _nand,$@)" ] ; then \
 			echo "#define CONFIG_SYS_NO_FLASH" >> $(obj)include/config.h ; \
 			echo "#define CONFIG_NAND_ENV"    >>$(obj)include/config.h ; \
+            echo "#define CONFIG_BOOTDELAY 2" >>$(obj)include/config.h ; \
 			echo "Setting up TI8148 default build with ENV in NAND..." ; \
 		elif [ "$(findstring spi,$@)" ] ; then \
 			echo "#define CONFIG_SYS_NO_FLASH" >> $(obj)include/config.h ; \
 			echo "#define CONFIG_SPI_ENV"    >>$(obj)include/config.h ; \
+            echo "#define CONFIG_BOOTDELAY 2" >>$(obj)include/config.h ; \
 			echo "Setting up TI8148 default build with ENV in SPI..." ; \
 		else	\
 			echo "#define CONFIG_SYS_NO_FLASH" >> $(obj)include/config.h ; \
 			echo "#define CONFIG_NAND_ENV"    >>$(obj)include/config.h ; \
+            echo "#define CONFIG_BOOTDELAY 2" >>$(obj)include/config.h ; \
 			echo "Setting up TI8148 default build with ENV in NAND..." ; \
 		fi; \
 	fi;

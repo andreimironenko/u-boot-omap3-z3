@@ -183,6 +183,14 @@ void NcStart(void);
 int nc_input_packet(uchar *pkt, unsigned dest, unsigned src, unsigned len);
 #endif
 
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+/*
+ * Start with a default last protocol.
+ * We are only interested in NETCONS or not.
+ */
+proto_t net_loop_last_protocol = BOOTP;
+#endif
+
 volatile uchar	PktBuf[(PKTBUFSRX+1) * PKTSIZE_ALIGN + PKTALIGN];
 
 volatile uchar *NetRxPackets[PKTBUFSRX]; /* Receive packets			*/
@@ -340,14 +348,22 @@ NetLoop(proto_t protocol)
 		NetArpWaitTxPacketSize = 0;
 	}
 
-	eth_halt();
-#ifdef CONFIG_NET_MULTI
-	eth_set_current();
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+	if (protocol != NETCONS || net_loop_last_protocol != NETCONS) {
 #endif
-	if (eth_init(bd) < 0) {
 		eth_halt();
-		return(-1);
+#ifdef CONFIG_NET_MULTI
+		eth_set_current();
+#endif
+		if (eth_init(bd) < 0) {
+			eth_halt();
+			return -1;
+		}
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+	} else {
+		eth_init_state_only(bd);
 	}
+#endif
 
 restart:
 #ifdef CONFIG_NET_MULTI
@@ -480,6 +496,10 @@ restart:
 		 */
 		if (ctrlc()) {
 			eth_halt();
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+			/* Invalidate the last protocol */
+			net_loop_last_protocol = BOOTP;
+#endif
 			puts ("\nAbort\n");
 			return (-1);
 		}
@@ -533,10 +553,26 @@ restart:
 				sprintf(buf, "%lX", (unsigned long)load_addr);
 				setenv("fileaddr", buf);
 			}
-			eth_halt();
+
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+			if (protocol != NETCONS) {
+#endif
+				eth_halt();
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+			} else {
+				eth_halt_state_only();
+			}
+			/* Remember what the last protocol was */
+			net_loop_last_protocol = protocol;
+#endif
+
 			return NetBootFileXferSize;
 
 		case NETLOOP_FAIL:
+			#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+						/* Invalidate the last protocol */
+						net_loop_last_protocol = BOOTP;
+			#endif
 			return (-1);
 		}
 	}
@@ -1473,7 +1509,7 @@ NetReceive(volatile uchar * inpkt, int len)
 				memcpy(NetArpWaitPacketMAC, &arp->ar_data[0], 6);
 
 #ifdef CONFIG_NETCONSOLE
-				(*packetHandler)(0,0,0,0);
+				//(*packetHandler)(0,0,0,0);
 #endif
 				/* modify header, and transmit it */
 				memcpy(((Ethernet_t *)NetArpWaitTxPacket)->et_dest, NetArpWaitPacketMAC, 6);

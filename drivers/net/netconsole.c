@@ -125,8 +125,18 @@ static void nc_send_packet (const char *buf, int len)
 	}
 
 	if (eth->state != ETH_STATE_ACTIVE) {
-		if (eth_init (gd->bd) < 0)
-			return;
+
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+		if (net_loop_last_protocol != NETCONS) {
+#endif
+			if (eth_init(gd->bd) < 0)
+				return;
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+			net_loop_last_protocol = NETCONS;
+		} else {
+			eth_init_state_only(gd->bd);
+		}
+#endif
 		inited = 1;
 	}
 	pkt = (uchar *) NetTxPacket + NetEthHdrSize () + IP_HDR_SIZE;
@@ -135,8 +145,17 @@ static void nc_send_packet (const char *buf, int len)
 	ip = nc_ip;
 	NetSendUDPPacket (ether, ip, nc_port, nc_port, len);
 
-	if (inited)
-		eth_halt ();
+	if (inited) {
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+		if (net_loop_last_protocol != NETCONS) {
+#endif
+			eth_halt();
+#ifdef CONFIG_NETCONSOLE_PERSIST_ETH
+		} else {
+			eth_halt_state_only();
+		}
+#endif
+	}
 }
 
 static int nc_start(void)
