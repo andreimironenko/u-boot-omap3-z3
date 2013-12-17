@@ -384,9 +384,8 @@ $(U_BOOT_ONENAND):	$(ONENAND_IPL) $(obj)u-boot.bin
 		cat $(ONENAND_BIN) $(obj)u-boot.bin > $(obj)u-boot-onenand.bin
 
 $(VERSION_FILE):
-		@( printf '#define U_BOOT_VERSION "U-Boot %s%s"\n' "$(U_BOOT_VERSION)" \
-		 '$(shell $(TOPDIR)/tools/setlocalversion $(TOPDIR))' ) > $@.tmp
-		@cmp -s $@ $@.tmp && rm -f $@.tmp || mv -f $@.tmp $@
+		@( printf '#define U_BOOT_VERSION "%s"\n' \
+		 '$(shell git describe)') > $@
 
 $(TIMESTAMP_FILE):
 		@LC_ALL=C date +'#define U_BOOT_DATE "%b %d %C%y"' > $@
