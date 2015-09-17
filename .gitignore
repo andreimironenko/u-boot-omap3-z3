@@ -76,3 +76,4 @@ u-boot.min.nand
 u-boot.min.uart
 arch/arm/include/asm
 tools/mkimage-arm
+tools/env/fw_printenv-arm

@@ -47,7 +47,7 @@
 //# define CONFIG_TI814X_EVM_DDR3
 # define CONFIG_TI814X_EVM_DDR2
  
-# define CONFIG_ENV_SIZE		0x600//0x400
+# define CONFIG_ENV_SIZE		0x680//0x400
 # define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (8 * 1024))
 # define CONFIG_SYS_PROMPT		"Z3-MIN# "
 #define CONFIG_BOOTDELAY
@@ -78,6 +78,7 @@
     "min_update=echo Updating u-boot.min.nand ...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/u-boot.min.nand;nandecc hw 2;nand write 0x81000000 0 0x20000; nandecc sw;\0"\
     "uboot_update=echo Updating u-boot.bin ...; mw.b 0x81000000 0xFF 0x60000;tftp 0x81000000 ${tftp_path}/u-boot.bin;nandecc sw; nand write.i 0x81000000 0x20000 0x1B0000;\0"\
     "env_update=echo Updating u-boot env...; mw.b 0x81000000 0xFF 0x20000;tftp 0x81000000 ${tftp_path}/default.scr;nandecc sw 0; nand write.i 0x81000000 0x200000 0x20000;\0" \
+    "kernel_update=echo Updating uImag ...; mw.b 0x81000000 0xFF 0x440000;tftp 0x81000000 ${tftp_path}/uImage;nandecc sw 0; nand write.i 0x81000000 0x280000 0x440000;\0" \
     "ubi_update=echo Updaing rootfs ubi.img...; mw.b 0x81000000 0xFF 0xC820000;tftp 0x81000000 ${tftp_path}/ubi.img;nandecc sw; nand write 0x81000000 0x6C0000 0xB820000;\0" \
     "dhcp_vendor-class-identifier=iptft-${ethaddr}\0"
 #endif
@@ -99,6 +100,7 @@
                   run min_update; \
                   run uboot_update; \
                   run env_update; \
+                  run kernel_update; \
                   run ubi_update; \
                   reset; \
                   "
